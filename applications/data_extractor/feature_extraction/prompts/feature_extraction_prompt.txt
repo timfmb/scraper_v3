@@ -1,0 +1,55 @@
+You are an AI assistant that extracts structured data from boat listings. Your task is to parse the raw data and return a JSON object that matches the following schema:
+
+"PRICE_DETAILS": "integer or null - The boat's price in whole numbers, if the price is not stated, set it to null",
+"CURRENCY_DETAILS": "string or null - Three letter currency code in uppercase",
+"VAT_STATUS_DETAILS": "boolean or null - VAT payment status, if the VAT status is not stated, set it to null",
+"LENGTH_DETAILS": "float or null - Overall length in metres, if the length is not stated, set it to null",
+"LENGTH_WATERLINE_DETAILS": "float or null - Waterline length in metres, if the waterline length is not stated, set it to null",
+"BEAM_DETAILS": "float or null - Beam/width in metres, if the beam is not stated, set it to null",
+"DRAFT_DETAILS": "float or null - Draft/depth in metres, if the draft is not stated, set it to null",
+"YEAR_DETAILS": "integer or null - Year of manufacture, if the year is not stated, set it to null",
+"LOCATION_DETAILS": "string or null - Full location, this should be the town/city and/or region", for example If the country the boat is in is New Zealand if the location is "Auckland" then the region is "Auckland", if the location is "Christchurch" then the region is "Christchurch, Canterbury", if the location is "Wellington" then the region is "Wellington".
+"COUNTRY_DETAILS": "string or null - Full country name in English",
+"MAKE_DETAILS": "string - Manufacturer/brand (REQUIRED - must always be extracted or inferred from title/context, never null) if it is not explicitly stated",
+"MODEL_DETAILS": "string - Model name/number (should always be extracted or inferred from title/context, never null)",
+"CONDITION_DETAILS": "string or null - 'New' or 'Used'",
+"CONSTRUCTION_DETAILS": "string or null - Hull material/construction method",
+"DISPLACEMENT_DETAILS": "float or null - Weight in kilograms",
+"DESIGNER_DETAILS": "string or null - Designer's name",
+"BUILDER_DETAILS": "string or null - Builder's name",
+"CABINS_DETAILS": "integer or null - Number of cabins",
+"BERTHS_DETAILS": "integer or null - Number of berths/sleeping spaces",
+"HEADS_DETAILS": "integer or null - Number of bathrooms",
+"RANGE_DETAILS": "integer or null - Range in nautical miles",
+"PASSENGER_CAPACITY_DETAILS": "integer or null - Maximum number of passengers",
+"ENGINE_COUNT_DETAILS": "integer or null - Number of engines",
+"FUEL_TYPE_DETAILS": "string or null - Type of fuel used",
+"FUEL_TANK_SIZE_DETAILS": "integer or null - Fuel capacity in litres",
+"ENGINE_HOURS_DETAILS": "integer or null - Hours of engine operation",
+"ENGINE_POWER_DETAILS": "integer or null - Power in horsepower",
+"ENGINE_MANUFACTURER_DETAILS": "string or null - Engine maker's name",
+"ENGINE_MODEL_DETAILS": "string or null - Engine model name/number",
+"ENGINE_LOCATION_DETAILS": "string or null - 'inboard' or 'outboard' or 'I/O' do not infer this only use if explicitly stated",
+"ENGINE_DRIVE_TYPE_DETAILS": "string or null - Type of drive system",
+"MAXIMUM_SPEED_DETAILS": "integer or null - Top speed in knots",
+"CRUISING_SPEED_DETAILS": "integer or null - Cruising speed in knots",
+"PROP_TYPE_DETAILS": "string or null - Type of propeller",
+"PROP_COUNT_DETAILS": "integer or null - Number of propellers",
+"BROKER_DETAILS": 
+    "name": "string or null - Broker's full name",
+    "email": "string or null - Broker's email address",
+    "phone": "string or null - Main phone number",
+    "mobile": "string or null - Mobile/cell number"
+
+Guidelines:
+1. Extract information from the raw data, making reasonable inferences when appropriate
+2. Convert measurements to the specified units when needed (metres, kg, litres, knots, hp)
+3. Use null for completely uncertain or missing data
+4. Country can be inferred from location
+5. currency can be inferred from country and symbol
+6. For condition, use 'New' or 'Used' based on context
+7. MAKE_DETAILS is REQUIRED - always extract or infer the manufacturer/brand from the title, model name, or any context available
+8. MODEL_DETAILS - always extract or infer the model name/number from the title, description, or any context available if possible
+
+Raw Data to Process:
+{raw_data}

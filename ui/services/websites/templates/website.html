@@ -1,0 +1,3362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Details - Scraper Dashboard</title>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --light-bg: #0f172a;
+            --dark-bg: #020617;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            --card-hover-bg: #2d3748;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gradient-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, var(--accent-glow) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            padding: 0.75rem 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            background: var(--card-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .website-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .website-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .website-url {
+            color: var(--info-color);
+            font-size: 1.1rem;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            display: inline-block;
+            transition: color 0.2s ease;
+        }
+
+        .website-url:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .website-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .website-tag {
+            padding: 0.4rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 1.5rem;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .website-tag:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.05);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .config-section {
+            grid-column: 1 / -1;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+            opacity: 0.7;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .config-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .config-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .config-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .config-edit-button {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.375rem;
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .config-edit-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .config-details {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .config-row:last-child {
+            border-bottom: none;
+        }
+
+        .config-key {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .config-value {
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .config-value.boolean.true {
+            color: var(--success-color);
+        }
+
+        .config-value.boolean.false {
+            color: var(--danger-color);
+        }
+
+        .config-key-with-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .inline-edit-button {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            padding: 0.2rem 0.4rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .inline-edit-button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .defaults-container {
+            margin-top: 0.5rem;
+        }
+
+        .defaults-values {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .default-item {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .default-item strong {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            position: relative;
+            max-height: 400px;
+            width: 100%;
+            min-height: 60px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* CodeMirror styling */
+        .code-editor {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .CodeMirror {
+            height: auto !important;
+            min-height: 100px !important;
+            max-height: 400px !important;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace !important;
+            font-size: 0.85rem !important;
+            line-height: 1.5 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .CodeMirror-scroll {
+            max-height: 400px !important;
+            overflow: auto !important;
+        }
+
+        .CodeMirror-lines {
+            padding: 8px !important;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .code-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .copy-button, .edit-button {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.25rem;
+            color: var(--primary-color);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-button {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success-color);
+        }
+
+        .copy-button:hover, .edit-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .copy-button:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .edit-button:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .copy-button.copied {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success-color);
+        }
+
+        /* Remove old Python syntax highlighting as we're using CodeMirror */
+
+        .pages-section {
+            grid-column: 1 / -1;
+        }
+
+        .pages-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-filters-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex: 1;
+        }
+
+        .pages-search {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            min-width: 300px;
+            flex: 1;
+        }
+
+        .pages-search:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .error-filter {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            min-width: 200px;
+            cursor: pointer;
+        }
+
+        .error-filter:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .error-filter option {
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+
+
+        .pages-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .pages-grid {
+            display: grid;
+            gap: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .pages-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .pages-grid::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .pages-grid::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .view-data-btn {
+            padding: 0.25rem 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.25rem;
+            color: var(--primary-color);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-data-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .view-data-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(100, 100, 100, 0.1);
+            border-color: rgba(100, 100, 100, 0.3);
+            color: var(--text-secondary);
+        }
+
+        .view-json-btn {
+            padding: 0.25rem 0.75rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 0.25rem;
+            color: #22c55e;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-json-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .view-json-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(100, 100, 100, 0.1);
+            border-color: rgba(100, 100, 100, 0.3);
+            color: var(--text-secondary);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            max-width: 90vw;
+            max-height: 90vh;
+            width: 800px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .edit-modal-content {
+            width: 900px;
+            max-width: 95vw;
+            height: 700px;
+            max-height: 90vh;
+        }
+
+        .edit-code-editor {
+            flex: 1;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .edit-code-editor .CodeMirror {
+            height: 100% !important;
+            min-height: 400px !important;
+            max-height: none !important;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .save-button {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .save-button:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .save-button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .cancel-button {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cancel-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        /* Config Edit Modal Styles */
+        .config-form {
+            display: grid;
+            gap: 1.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-input, .form-select {
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-select {
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .form-select option {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-checkbox {
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .form-array {
+            min-height: 120px;
+            resize: vertical;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 0.25rem;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Image Carousel */
+        .image-carousel {
+            margin-bottom: 2rem;
+        }
+
+        .carousel-container {
+            position: relative;
+            background: #000;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .carousel-image.active {
+            display: block;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .carousel-nav.prev {
+            left: 1rem;
+        }
+
+        .carousel-nav.next {
+            right: 1rem;
+        }
+
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .carousel-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .carousel-indicator.active {
+            background: var(--primary-color);
+            transform: scale(1.2);
+        }
+
+        .no-images {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.75rem;
+            border: 1px dashed var(--border-color);
+        }
+
+        /* Data Display */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .data-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .data-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-value {
+            color: var(--text-primary);
+            font-size: 1rem;
+            word-break: break-word;
+        }
+
+        .data-value.currency {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .data-value.boolean {
+            font-weight: 500;
+        }
+
+        .data-value.boolean.true {
+            color: var(--success-color);
+        }
+
+        .data-value.boolean.false {
+            color: var(--danger-color);
+        }
+
+        .data-value.empty {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95vw;
+                max-height: 95vh;
+            }
+
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .carousel-nav {
+                font-size: 1.2rem;
+                padding: 0.25rem;
+            }
+        }
+
+        .page-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .page-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .page-item.inactive {
+            opacity: 0.5;
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .page-url {
+            color: var(--info-color);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+            word-break: break-all;
+        }
+
+        .page-url:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .page-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .page-status {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-indicator.scraped {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-indicator.not-scraped {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .status-indicator.has-data {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--primary-color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .website-title {
+                font-size: 2rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pages-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-filters-row {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .pages-search {
+                min-width: unset;
+            }
+
+            .error-filter {
+                min-width: unset;
+            }
+
+
+
+            .nav-links {
+                flex-wrap: wrap;
+            }
+        }
+
+        .error-counts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .error-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .error-item:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .error-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .error-count-badge {
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            min-width: 2rem;
+            text-align: center;
+        }
+
+        .no-errors {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+
+        .no-errors::before {
+            content: '✓';
+            margin-right: 0.5rem;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .error-pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .error-pill {
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.625rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            cursor: default;
+            line-height: 1.2;
+        }
+
+        .error-pill:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.25);
+        }
+
+        .json-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .json-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .copy-json-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .copy-json-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .json-content {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 60vh;
+            margin: 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .json-content::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .json-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .json-content::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .country-section {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+        .country-section .config-key {
+            margin-bottom: 0.5rem;
+        }
+
+        .country-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .country-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .country-item:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .country-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .country-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="/websites" class="nav-link">← All Websites</a>
+            <a href="/monitoring" class="nav-link">📊 Monitoring</a>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading website details...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="website-content" style="display: none;">
+            <div class="header">
+                <h1 class="website-title">
+                    <div class="website-icon" id="website-icon">WS</div>
+                    <span id="website-name">Website Name</span>
+                </h1>
+                <a href="#" id="website-url" class="website-url" target="_blank">Website URL</a>
+                <div class="website-tags" id="website-tags">
+                    <!-- Tags will be populated here -->
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Management Actions Section -->
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <div class="section-icon">🗑️</div>
+                        Management Actions
+                    </h2>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button 
+                            class="danger-button" 
+                            onclick="deleteAllHtml()" 
+                            style="background: #ef4444; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; transition: background 0.2s;"
+                            onmouseover="this.style.background='#dc2626'" 
+                            onmouseout="this.style.background='#ef4444'">
+                            Delete All HTML
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <div class="section-icon">📊</div>
+                        Statistics
+                    </h2>
+                    <div class="stats-grid" id="stats-grid">
+                        <!-- Stats will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Quick Info Section -->
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <div class="section-icon">ℹ️</div>
+                        Quick Info
+                    </h2>
+                    <div class="config-details" id="quick-info">
+                        <!-- Quick info will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Error Counts Section -->
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <div class="section-icon">⚠️</div>
+                        Error Counts
+                    </h2>
+                    <div class="error-counts-container" id="error-counts">
+                        <!-- Error counts will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div class="section-card config-section">
+                    <h2 class="section-title">
+                        <div class="section-icon">⚙️</div>
+                        Configuration
+                    </h2>
+                    <div class="config-grid" id="config-grid">
+                        <!-- Configuration will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Pages Section -->
+                <div class="section-card pages-section">
+                    <h2 class="section-title">
+                        <div class="section-icon">📄</div>
+                        Pages
+                    </h2>
+                    <div class="pages-controls">
+                        <div class="search-filters-row">
+                            <input type="text" id="pages-search" class="pages-search" placeholder="Search pages by URL...">
+                            <select id="error-filter" class="error-filter">
+                                <option value="">All Pages</option>
+                                <option value="no-errors">Pages Without Errors</option>
+                                <!-- Error options will be populated dynamically -->
+                            </select>
+
+                        </div>
+                        <div class="pages-stats">
+                            <span>Total: <strong id="total-pages">0</strong></span>
+                            <span>Active: <strong id="active-pages">0</strong></span>
+                            <span>Scraped: <strong id="scraped-pages">0</strong></span>
+                        </div>
+                    </div>
+                    <div class="pages-grid" id="pages-grid">
+                        <!-- Pages will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Modal -->
+        <div id="data-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modal-title">Page Data</h2>
+                    <button class="modal-close" onclick="closeDataModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-content">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JSON Data Modal -->
+        <div id="json-data-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="json-modal-title">Raw JSON Data</h2>
+                    <button class="modal-close" onclick="closeJsonDataModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="json-container">
+                        <div class="json-header">
+                            <button class="copy-json-btn" onclick="copyJsonData()">Copy JSON</button>
+                        </div>
+                        <pre id="json-content" class="json-content">
+                            <!-- JSON content will be populated dynamically -->
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Code Modal -->
+        <div id="edit-code-modal" class="modal-overlay">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="edit-modal-title">Edit Code</h2>
+                    <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="flex: 1; display: flex; flex-direction: column;">
+                    <div class="edit-code-editor">
+                        <textarea id="edit-code-textarea" style="display: none;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" onclick="closeEditModal()">Cancel</button>
+                    <button class="save-button" onclick="saveCode()" id="save-button">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Config Modal -->
+        <div id="edit-config-modal" class="modal-overlay">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit List Page Configuration</h2>
+                    <button class="modal-close" onclick="closeConfigModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="flex: 1; overflow-y: auto;">
+                    <form class="config-form" id="config-form">
+                        <div class="form-group">
+                            <label class="form-label">Wait Type</label>
+                            <select class="form-select" id="wait_type" required>
+                                <option value="load state">Load State</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Wait For</label>
+                            <select class="form-select" id="wait_for" required>
+                                <option value="domcontentloaded">DOM Content Loaded</option>
+                                <option value="networkidle">Network Idle</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Browser Type</label>
+                            <select class="form-select" id="browser_type" required>
+                                <option value="chromium">Chromium</option>
+                                <option value="firefox">Firefox</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-checkbox-group">
+                                <input type="checkbox" class="form-checkbox" id="use_route_intercept">
+                                <label class="form-label" for="use_route_intercept">Use Route Intercept</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-checkbox-group">
+                                <input type="checkbox" class="form-checkbox" id="use_proxy">
+                                <label class="form-label" for="use_proxy">Use Proxy</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-checkbox-group">
+                                <input type="checkbox" class="form-checkbox" id="bypass_cloudflare">
+                                <label class="form-label" for="bypass_cloudflare">Bypass Cloudflare</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Timeout (ms)</label>
+                            <input type="number" class="form-input" id="timeout" value="90000" min="1000" max="300000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Page Start</label>
+                            <input type="number" class="form-input" id="page_start" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Page Step</label>
+                            <input type="number" class="form-input" id="page_step" min="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Max Retries</label>
+                            <input type="number" class="form-input" id="max_retries" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Max Pages</label>
+                            <input type="number" class="form-input" id="max_pages" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">URL Strings (one per line)</label>
+                            <textarea class="form-input form-array" id="url_strings" rows="6" placeholder="Enter URL strings, one per line..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" onclick="closeConfigModal()">Cancel</button>
+                    <button class="save-button" onclick="saveConfig()" id="save-config-button">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Detail Page Config Modal -->
+        <div id="edit-detail-config-modal" class="modal-overlay">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit Detail Page Configuration</h2>
+                    <button class="modal-close" onclick="closeDetailConfigModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="flex: 1; overflow-y: auto;">
+                    <form class="config-form" id="detail-config-form">
+                        <div class="form-group">
+                            <label class="form-label">Wait Until</label>
+                            <select class="form-select" id="detail_wait_until" required>
+                                <option value="load">Load</option>
+                                <option value="domcontentloaded">DOM Content Loaded</option>
+                                <option value="networkidle">Network Idle</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Wait For Selector (optional)</label>
+                            <input type="text" class="form-input" id="detail_wait_for_selector" placeholder="CSS selector to wait for">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" onclick="closeDetailConfigModal()">Cancel</button>
+                    <button class="save-button" onclick="saveDetailConfig()" id="save-detail-config-button">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Defaults Modal -->
+        <div id="edit-defaults-modal" class="modal-overlay">
+            <div class="modal-content edit-modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit Default Values</h2>
+                    <button class="modal-close" onclick="closeDefaultsModal()">&times;</button>
+                </div>
+                <div class="modal-body" style="flex: 1; overflow-y: auto;">
+                    <form class="config-form" id="defaults-form">
+                        <div class="form-group">
+                            <label class="form-label">Default Location</label>
+                            <input type="text" class="form-input" id="default_location" placeholder="Enter default location">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Default Country</label>
+                            <input type="text" class="form-input" id="default_country" placeholder="Enter default country">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Default Currency</label>
+                            <input type="text" class="form-input" id="default_currency" placeholder="Enter default currency (e.g., USD, EUR)">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" onclick="closeDefaultsModal()">Cancel</button>
+                    <button class="save-button" onclick="saveDefaults()" id="save-defaults-button">Save Defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-confirmation-modal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Confirm Delete Action</h2>
+                    <button class="modal-close" onclick="closeDeleteConfirmationModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="font-size: 2rem; color: #ef4444;">⚠️</div>
+                        <div>
+                            <p style="margin: 0 0 1rem 0; font-weight: 600; color: var(--text-primary);">
+                                Are you sure you want to delete all HTML for this website?
+                            </p>
+                            <p style="margin: 0; color: var(--text-secondary); line-height: 1.5;">
+                                This action cannot be undone. This will remove all stored HTML content from the pages, but keep the page records and extracted data.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel-button" onclick="closeDeleteConfirmationModal()">Cancel</button>
+                    <button class="save-button" onclick="confirmDeleteAllHtml()" id="confirm-delete-button" style="background: #ef4444;">
+                        Delete All HTML
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class WebsiteDetailsManager {
+            constructor() {
+                this.websiteData = null;
+                this.filteredPages = [];
+                this.searchQuery = '';
+                this.selectedErrorFilter = '';
+                this.websiteName = this.getWebsiteNameFromUrl();
+
+                this.init();
+            }
+
+            getWebsiteNameFromUrl() {
+                const pathParts = window.location.pathname.split('/');
+                return pathParts[pathParts.length - 1];
+            }
+
+            async init() {
+                await this.loadWebsiteData();
+                this.setupEventListeners();
+            }
+
+            async loadWebsiteData() {
+                try {
+                    const response = await fetch(`/websites/website/${this.websiteName}/data`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    this.websiteData = await response.json();
+                    this.filteredPages = [...this.websiteData.pages];
+                    
+                    this.hideLoading();
+                    this.renderWebsiteDetails();
+                    this.renderPages();
+                } catch (error) {
+                    this.showError(`Failed to load website details: ${error.message}`);
+                }
+            }
+
+            renderWebsiteDetails() {
+                const data = this.websiteData;
+
+                // Update title and basic info
+                const nameInitials = data.name.split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+
+                document.getElementById('website-icon').textContent = nameInitials;
+                document.getElementById('website-name').textContent = data.name;
+                document.getElementById('website-url').href = data.url;
+                document.getElementById('website-url').textContent = data.url;
+
+                // Update page title
+                document.title = `${data.name} - Website Details`;
+
+                // Render tags
+                this.renderTags(data.tags);
+
+                // Render statistics
+                this.renderStatistics(data);
+
+                // Render quick info
+                this.renderQuickInfo(data);
+
+                // Render error counts
+                this.renderErrorCounts(data);
+
+                // Render configuration
+                this.renderConfiguration(data);
+            }
+
+            renderTags(tags) {
+                const container = document.getElementById('website-tags');
+                container.innerHTML = '';
+
+                if (tags && tags.length > 0) {
+                    tags.forEach(tag => {
+                        const tagElement = document.createElement('div');
+                        tagElement.className = 'website-tag';
+                        tagElement.textContent = tag;
+                        container.appendChild(tagElement);
+                    });
+                } else {
+                    container.innerHTML = '<span style="color: var(--text-secondary); font-style: italic;">No tags</span>';
+                }
+            }
+
+            renderStatistics(data) {
+                const container = document.getElementById('stats-grid');
+                const totalPages = data.pages.length;
+                const activePages = data.pages.filter(p => p.active !== false).length;
+                const scrapedPages = data.pages.filter(p => p.html && p.html.length > 0).length;
+                const pagesWithData = data.pages.filter(p => p.extracted_data).length;
+
+                const stats = [
+                    { label: 'Total Pages', value: totalPages },
+                    { label: 'Active Pages', value: activePages },
+                    { label: 'Scraped Pages', value: scrapedPages },
+                    { label: 'Extracted Data', value: pagesWithData }
+                ];
+
+                container.innerHTML = '';
+                stats.forEach(stat => {
+                    const statElement = document.createElement('div');
+                    statElement.className = 'stat-item';
+                    statElement.innerHTML = `
+                        <div class="stat-value">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    `;
+                    container.appendChild(statElement);
+                });
+            }
+
+            renderQuickInfo(data) {
+                const container = document.getElementById('quick-info');
+                
+                // Calculate country counts from extracted data
+                const countryCounts = {};
+                if (data.pages && data.pages.length > 0) {
+                    data.pages.forEach(page => {
+                        if (page.extracted_data && page.extracted_data.country) {
+                            const country = page.extracted_data.country;
+                            if (country && country.trim() !== '') {
+                                if (country in countryCounts) {
+                                    countryCounts[country] += 1;
+                                } else {
+                                    countryCounts[country] = 1;
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Sort countries by count (descending) then by name
+                const sortedCountries = Object.entries(countryCounts)
+                    .sort(([a, countA], [b, countB]) => {
+                        if (countB !== countA) return countB - countA; // Sort by count desc
+                        return a.localeCompare(b); // Then by name asc
+                    });
+
+                const quickInfo = [
+                    { key: 'Scraper Type', value: data.list_page_scraper_type || 'Not set' },
+                    { key: 'Page Scraper Time Delta', value: `${data.page_scraper_time_delta || 0} seconds` },
+                    { key: 'Tags', value: data.tags && data.tags.length > 0 ? data.tags.join(', ') : 'No tags' }
+                ];
+
+                container.innerHTML = '';
+                quickInfo.forEach(info => {
+                    const row = document.createElement('div');
+                    row.className = 'config-row';
+                    row.innerHTML = `
+                        <span class="config-key">${info.key}</span>
+                        <span class="config-value">${this.escapeHtml(info.value)}</span>
+                    `;
+                    container.appendChild(row);
+                });
+
+                // Add country counts if any exist (as a separate formatted list)
+                if (sortedCountries.length > 0) {
+                    const countryRow = document.createElement('div');
+                    countryRow.className = 'config-row country-section';
+                    countryRow.innerHTML = `
+                        <span class="config-key">Countries</span>
+                        <div class="country-list">
+                            ${sortedCountries.map(([country, count]) => 
+                                `<div class="country-item">
+                                    <span class="country-name">${this.escapeHtml(country)}</span>
+                                    <span class="country-count">${count}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    `;
+                    container.appendChild(countryRow);
+                }
+            }
+
+            renderErrorCounts(data) {
+                const container = document.getElementById('error-counts');
+                container.innerHTML = '';
+
+                // Calculate error counts from pages
+                const errorCounts = {};
+                if (data.pages && data.pages.length > 0) {
+                    data.pages.forEach(page => {
+                        if (page.errors && page.errors.length > 0) {
+                            page.errors.forEach(error => {
+                                if (error in errorCounts) {
+                                    errorCounts[error] += 1;
+                                } else {
+                                    errorCounts[error] = 1;
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Sort errors by count (descending) then by name
+                const sortedErrors = Object.entries(errorCounts)
+                    .sort(([a, countA], [b, countB]) => {
+                        if (countB !== countA) return countB - countA; // Sort by count desc
+                        return a.localeCompare(b); // Then by name asc
+                    });
+
+                if (sortedErrors.length > 0) {
+                    sortedErrors.forEach(([errorName, count]) => {
+                        const errorItem = document.createElement('div');
+                        errorItem.className = 'error-item';
+                        errorItem.innerHTML = `
+                            <span class="error-name">${this.escapeHtml(errorName)}</span>
+                            <span class="error-count-badge">${count}</span>
+                        `;
+                        container.appendChild(errorItem);
+                    });
+                } else {
+                    const noErrorsElement = document.createElement('div');
+                    noErrorsElement.className = 'no-errors';
+                    noErrorsElement.textContent = 'No errors detected';
+                    container.appendChild(noErrorsElement);
+                }
+            }
+
+            renderConfiguration(data) {
+                const container = document.getElementById('config-grid');
+                container.innerHTML = '';
+
+                // List Page Configuration
+                if (data.list_page_config) {
+                    const listPageConfig = document.createElement('div');
+                    listPageConfig.className = 'config-item';
+                    listPageConfig.innerHTML = `
+                        <div class="config-title-container">
+                        <div class="config-title">List Page Configuration</div>
+                            <button class="config-edit-button" onclick="editListPageConfig()">Edit Settings</button>
+                        </div>
+                        <div class="config-details">
+                            ${this.renderConfigObject(data.list_page_config)}
+                        </div>
+                    `;
+                    container.appendChild(listPageConfig);
+                }
+
+                // Detail Page Configuration
+                if (data.detail_page_config) {
+                    const detailPageConfig = document.createElement('div');
+                    detailPageConfig.className = 'config-item';
+                    detailPageConfig.innerHTML = `
+                        <div class="config-title-container">
+                            <div class="config-title">Detail Page Configuration</div>
+                            <button class="config-edit-button" onclick="editDetailPageConfig()">Edit Settings</button>
+                        </div>
+                        <div class="config-details">
+                            ${this.renderConfigObject(data.detail_page_config)}
+                        </div>
+                    `;
+                    container.appendChild(detailPageConfig);
+                }
+                
+                // Re-initialize CodeMirror for newly added code blocks
+                setTimeout(() => this.initCodeMirror(), 200);
+            }
+
+            renderConfigObject(config) {
+                let html = '';
+                
+                // Define the order: these fields should appear first for list page config
+                const listPagePriorityFields = ['page_start', 'page_step', 'max_retries', 'max_pages', 'bypass_cloudflare'];
+                
+                // Define the order: these fields should appear first for detail page config
+                const detailPagePriorityFields = ['wait_until', 'wait_for_selector'];
+                
+                // Determine which priority fields to use based on the config content
+                let priorityFields = [];
+                if (config.hasOwnProperty('scraping_function') || config.hasOwnProperty('url_strings')) {
+                    // This is likely a list page config
+                    priorityFields = listPagePriorityFields;
+                } else if (config.hasOwnProperty('scraper_string')) {
+                    // This is likely a detail page config
+                    priorityFields = detailPagePriorityFields;
+                }
+                
+                // Render priority fields first
+                priorityFields.forEach(key => {
+                    if (config.hasOwnProperty(key)) {
+                        const value = config[key];
+                        const isCodeField = this.isCodeField(key, value);
+                        
+                        if (isCodeField) {
+                            html += this.renderCodeField(key, value);
+                        } else {
+                            let displayValue = value;
+                            let className = 'config-value';
+
+                            if (value === null || value === undefined) {
+                                displayValue = 'Not set';
+                                className += ' empty';
+                            } else if (typeof value === 'boolean') {
+                                className += ` boolean ${value}`;
+                                displayValue = value ? 'Yes' : 'No';
+                            } else if (typeof value === 'string' && value === '') {
+                                displayValue = 'Empty';
+                                className += ' empty';
+                                                    } else if (Array.isArray(value)) {
+                            displayValue = value.length > 0 ? value.join(', ') : 'Empty array';
+                        } else if (typeof value === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
+
+                            html += `
+                                <div class="config-row">
+                                    <span class="config-key">${this.formatKey(key)}</span>
+                                    <span class="${className}">${displayValue}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                
+                // Render remaining fields except code fields (scraping_function, scraper_string)
+                for (const [key, value] of Object.entries(config)) {
+                    if (!priorityFields.includes(key) && 
+                        key !== 'scraping_function' && 
+                        key !== 'scraper_string' && 
+                        key !== 'extra_data_function' && 
+                        key !== 'pre_scrape_function') {
+                        
+                        const isCodeField = this.isCodeField(key, value);
+                        
+                        if (isCodeField) {
+                            html += this.renderCodeField(key, value);
+                        } else {
+                            let displayValue = value;
+                            let className = 'config-value';
+
+                            if (value === null || value === undefined) {
+                                displayValue = 'Not set';
+                                className += ' empty';
+                            } else if (typeof value === 'boolean') {
+                                className += ` boolean ${value}`;
+                                displayValue = value ? 'Yes' : 'No';
+                            } else if (typeof value === 'string' && value === '') {
+                                displayValue = 'Empty';
+                                className += ' empty';
+                            } else if (Array.isArray(value)) {
+                                displayValue = value.length > 0 ? value.join(', ') : 'Empty array';
+                            } else if (typeof value === 'object') {
+                                displayValue = JSON.stringify(value, null, 2);
+                            }
+
+                            html += `
+                                <div class="config-row">
+                                    <span class="config-key">${this.formatKey(key)}</span>
+                                    <span class="${className}">${displayValue}</span>
+                    </div>
+                `;
+                        }
+                    }
+                }
+                
+                // Render pre_scrape_function before extra_data_function (for list page)
+                if (config.hasOwnProperty('pre_scrape_function')) {
+                    const value = config.pre_scrape_function;
+                    const isCodeField = this.isCodeField('pre_scrape_function', value);
+                    
+                    if (isCodeField) {
+                        html += this.renderCodeField('pre_scrape_function', value);
+                    } else {
+                        let displayValue = value;
+                        let className = 'config-value';
+
+                        if (value === null || value === undefined) {
+                            displayValue = 'Not set';
+                            className = 'config-value-null';
+                        } else if (typeof value === 'boolean') {
+                            displayValue = value ? 'True' : 'False';
+                            className = value ? 'config-value-true' : 'config-value-false';
+                        } else if (Array.isArray(value)) {
+                            displayValue = value.length === 0 ? 'Empty array' : `[${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}]`;
+                        }
+
+                        html += `
+                            <div class="config-row">
+                                <span class="config-key">${this.formatKey('pre_scrape_function')}</span>
+                                <span class="${className}">${displayValue}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Render extra_data_function before scraping_function (for list page)
+                if (config.hasOwnProperty('extra_data_function')) {
+                    const value = config.extra_data_function;
+                    const isCodeField = this.isCodeField('extra_data_function', value);
+                    
+                    if (isCodeField) {
+                        html += this.renderCodeField('extra_data_function', value);
+                    } else {
+                        let displayValue = value;
+                        let className = 'config-value';
+
+                        if (value === null || value === undefined) {
+                            displayValue = 'Not set';
+                            className += ' empty';
+                        } else if (typeof value === 'boolean') {
+                            className += ` boolean ${value}`;
+                            displayValue = value ? 'Yes' : 'No';
+                        } else if (typeof value === 'string' && value === '') {
+                            displayValue = 'Empty';
+                            className += ' empty';
+                        } else if (Array.isArray(value)) {
+                            displayValue = value.length > 0 ? value.join(', ') : 'Empty array';
+                        } else if (typeof value === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
+
+                        html += `
+                            <div class="config-row">
+                                <span class="config-key">${this.formatKey('extra_data_function')}</span>
+                                <span class="${className}">${displayValue}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Render code fields last (scraping_function for list page, scraper_string for detail page)
+                if (config.hasOwnProperty('scraping_function') && 
+                    config.scraping_function !== null && 
+                    config.scraping_function !== undefined) {
+                    
+                    const value = config.scraping_function;
+                    const isCodeField = this.isCodeField('scraping_function', value);
+                    
+                    if (isCodeField) {
+                        html += this.renderCodeField('scraping_function', value);
+                            } else {
+                        let displayValue = value;
+                        let className = 'config-value';
+
+                        if (typeof value === 'boolean') {
+                            className += ` boolean ${value}`;
+                            displayValue = value ? 'Yes' : 'No';
+                        } else if (Array.isArray(value)) {
+                            displayValue = value.length > 0 ? value.join(', ') : 'Empty array';
+                        } else if (typeof value === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
+
+                        html += `
+                            <div class="config-row">
+                                <span class="config-key">${this.formatKey('scraping_function')}</span>
+                                <span class="${className}">${displayValue}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Render scraper_string last for detail page configs
+                if (config.hasOwnProperty('scraper_string') && 
+                    config.scraper_string !== null && 
+                    config.scraper_string !== undefined) {
+                    
+                    const value = config.scraper_string;
+                    const isCodeField = this.isCodeField('scraper_string', value);
+                    
+                    if (isCodeField) {
+                        html += this.renderCodeField('scraper_string', value);
+                        } else {
+                        let displayValue = value;
+                        let className = 'config-value';
+
+                        if (typeof value === 'boolean') {
+                            className += ` boolean ${value}`;
+                            displayValue = value ? 'Yes' : 'No';
+                        } else if (Array.isArray(value)) {
+                            displayValue = value.length > 0 ? value.join(', ') : 'Empty array';
+                        } else if (typeof value === 'object') {
+                            displayValue = JSON.stringify(value, null, 2);
+                        }
+
+                        html += `
+                            <div class="config-row">
+                                <span class="config-key">${this.formatKey('scraper_string')}</span>
+                                <span class="${className}">${displayValue}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Render defaults after scraper_string for detail page configs
+                if (config.hasOwnProperty('scraper_string')) {
+                    const defaults = config.defaults || {};
+                    const hasDefaults = defaults.location || defaults.country || defaults.currency;
+                    
+                    html += `
+                        <div class="config-row defaults-section">
+                            <div class="config-key-with-button">
+                                <span class="config-key">Default Values</span>
+                                <button class="inline-edit-button" onclick="editDefaults()" title="Edit Defaults">✏️</button>
+                            </div>
+                            <div class="config-value defaults-container">
+                                ${hasDefaults ? this.renderDefaultsValues(defaults) : '<span class="config-null">No defaults configured</span>'}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return html;
+            }
+
+            renderDefaultsValues(defaults) {
+                let html = '<div class="defaults-values">';
+                
+                if (defaults.location) {
+                    html += `<div class="default-item"><strong>Location:</strong> ${defaults.location}</div>`;
+                }
+                if (defaults.country) {
+                    html += `<div class="default-item"><strong>Country:</strong> ${defaults.country}</div>`;
+                }
+                if (defaults.currency) {
+                    html += `<div class="default-item"><strong>Currency:</strong> ${defaults.currency}</div>`;
+                }
+                
+                html += '</div>';
+                return html;
+            }
+
+            isCodeField(key, value) {
+                // Check if the field name suggests it contains code
+                const codeFieldNames = ['scraping_function', 'extra_data_function', 'pre_scrape_function', 'scraper_string'];
+                const isCodeFieldName = codeFieldNames.includes(key);
+                
+                // Check if the value looks like Python code
+                const isPythonCode = typeof value === 'string' && 
+                    value.length > 20 && 
+                    (value.includes('def ') || value.includes('import ') || value.includes('return '));
+                
+                return isCodeFieldName || isPythonCode;
+            }
+
+                        renderCodeField(key, code) {
+                const codeId = `code-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const isEditableField = key === 'scraping_function' || key === 'scraper_string' || key === 'extra_data_function' || key === 'pre_scrape_function';
+                
+                return `
+                    <div class="config-row" style="flex-direction: column; align-items: stretch; overflow: hidden; width: 100%; box-sizing: border-box;">
+                        <span class="config-key" style="margin-bottom: 0.5rem;">${this.formatKey(key)}</span>
+                        <div class="code-header">
+                            <span>Python Code</span>
+                            <div class="code-buttons">
+                                <button class="copy-button" onclick="copyCode('${codeId}')">Copy Code</button>
+                                ${isEditableField ? `<button class="edit-button" onclick="editCode('${codeId}', '${key}')">Edit Code</button>` : ''}
+                            </div>
+                        </div>
+                        <div class="code-editor" style="width: 100%; max-width: 100%; overflow: hidden;">
+                            <textarea id="${codeId}" style="display: none;">${this.escapeHtml(code)}</textarea>
+                        </div>
+                    </div>
+                `;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            escapeForAttribute(text) {
+                return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+            }
+
+            findPageByUrl(url) {
+                return this.websiteData.pages.find(page => page.url === url);
+            }
+
+            formatKey(key) {
+                return key.replace(/_/g, ' ')
+                         .replace(/\b\w/g, l => l.toUpperCase());
+            }
+
+            renderPages() {
+                this.updatePagesStats();
+                this.populateErrorFilter();
+                this.applyPageFilters();
+            }
+
+            updatePagesStats() {
+                const totalPages = this.websiteData.pages.length;
+                const activePages = this.websiteData.pages.filter(p => p.active !== false).length;
+                const scrapedPages = this.websiteData.pages.filter(p => p.html && p.html.length > 0).length;
+
+                document.getElementById('total-pages').textContent = totalPages;
+                document.getElementById('active-pages').textContent = activePages;
+                document.getElementById('scraped-pages').textContent = scrapedPages;
+            }
+
+            populateErrorFilter() {
+                const errorFilter = document.getElementById('error-filter');
+                const currentValue = errorFilter.value; // Preserve current selection
+                
+                // Collect all unique errors
+                const allErrors = new Set();
+                this.websiteData.pages.forEach(page => {
+                    if (page.errors && page.errors.length > 0) {
+                        page.errors.forEach(error => allErrors.add(error));
+                    }
+                });
+
+                // Sort errors alphabetically
+                const sortedErrors = Array.from(allErrors).sort();
+
+                // Clear existing options (except the first two)
+                while (errorFilter.children.length > 2) {
+                    errorFilter.removeChild(errorFilter.lastChild);
+                }
+
+                // Add error options
+                sortedErrors.forEach(error => {
+                    const option = document.createElement('option');
+                    option.value = error;
+                    option.textContent = `Pages with: ${error}`;
+                    errorFilter.appendChild(option);
+                });
+
+                // Restore previous selection if it still exists
+                if (currentValue && Array.from(errorFilter.options).some(opt => opt.value === currentValue)) {
+                    errorFilter.value = currentValue;
+                }
+            }
+
+            applyPageFilters() {
+                this.filteredPages = this.websiteData.pages.filter(page => {
+                    // Apply search filter
+                    if (this.searchQuery) {
+                        const searchLower = this.searchQuery.toLowerCase();
+                        if (!page.url.toLowerCase().includes(searchLower)) {
+                            return false;
+                        }
+                    }
+
+                    // Apply error filter
+                    if (this.selectedErrorFilter) {
+                        if (this.selectedErrorFilter === 'no-errors') {
+                            // Show pages without errors
+                            return !page.errors || page.errors.length === 0;
+                        } else {
+                            // Show pages with specific error
+                            return page.errors && page.errors.includes(this.selectedErrorFilter);
+                        }
+                    }
+
+                    return true;
+                });
+
+                this.renderFilteredPages();
+            }
+
+            renderFilteredPages() {
+                const container = document.getElementById('pages-grid');
+                container.innerHTML = '';
+
+                if (this.filteredPages.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 2rem;">No pages found</div>';
+                    return;
+                }
+
+                this.filteredPages.forEach(page => {
+                    const pageElement = document.createElement('div');
+                    pageElement.className = `page-item ${page.active === false ? 'inactive' : ''}`;
+
+                    const hasHtml = page.html && page.html.length > 0;
+                    const hasData = page.extracted_data;
+                    const lastScraped = page.last_scraped ? new Date(page.last_scraped).toLocaleString() : 'Never';
+                    const hasErrors = page.errors && page.errors.length > 0;
+
+                    // Generate error pills HTML
+                    let errorPillsHtml = '';
+                    if (hasErrors) {
+                        const errorPills = page.errors.map(error => 
+                            `<span class="error-pill">${this.escapeHtml(error)}</span>`
+                        ).join('');
+                        errorPillsHtml = `
+                            <div class="error-pills-container">
+                                ${errorPills}
+                            </div>
+                        `;
+                    }
+
+                    pageElement.innerHTML = `
+                        <a href="${page.url}" target="_blank" class="page-url">${page.url}</a>
+                        <div class="page-meta">
+                            <div class="page-status">
+                                <span class="status-indicator ${hasHtml ? 'scraped' : 'not-scraped'}">
+                                    ${hasHtml ? 'Scraped' : 'Not Scraped'}
+                                </span>
+                                ${hasData ? '<span class="status-indicator has-data">Has Data</span>' : ''}
+                                ${page.active === false ? '<span class="status-indicator not-scraped">Inactive</span>' : ''}
+                            </div>
+                            <div>Last scraped: ${lastScraped}</div>
+                        </div>
+                        <div class="page-actions">
+                            <button class="view-data-btn" ${!hasData ? 'disabled' : ''} onclick="openDataModal('${this.escapeForAttribute(page.url)}')">
+                                ${hasData ? 'View Data' : 'No Data'}
+                            </button>
+                            <button class="view-json-btn" ${!hasData ? 'disabled' : ''} onclick="openJsonDataModal('${this.escapeForAttribute(page.url)}')">
+                                ${hasData ? 'View JSON' : 'No JSON'}
+                            </button>
+                        </div>
+                        ${errorPillsHtml}
+                    `;
+                    container.appendChild(pageElement);
+                });
+            }
+
+            setupEventListeners() {
+                const searchBox = document.getElementById('pages-search');
+                searchBox.addEventListener('input', (e) => {
+                    this.searchQuery = e.target.value;
+                    this.applyPageFilters();
+                });
+
+                const errorFilter = document.getElementById('error-filter');
+                errorFilter.addEventListener('change', (e) => {
+                    this.selectedErrorFilter = e.target.value;
+                    this.applyPageFilters();
+                });
+
+                // Initialize CodeMirror for code blocks
+                this.initCodeMirror();
+            }
+
+            initCodeMirror() {
+                // Wait for CodeMirror to be loaded
+                if (typeof CodeMirror === 'undefined') {
+                    setTimeout(() => this.initCodeMirror(), 100);
+                    return;
+                }
+
+                // Clean up existing CodeMirror instances first
+                const existingTextareas = document.querySelectorAll('textarea[data-codemirror-initialized]');
+                existingTextareas.forEach(textarea => {
+                    if (textarea.codeMirrorEditor) {
+                        textarea.codeMirrorEditor.toTextArea();
+                        delete textarea.codeMirrorEditor;
+                        textarea.removeAttribute('data-codemirror-initialized');
+                    }
+                });
+
+                // Find all textareas that need CodeMirror
+                const textareas = document.querySelectorAll('.code-editor textarea');
+                textareas.forEach(textarea => {
+                    const editor = CodeMirror.fromTextArea(textarea, {
+                        mode: 'python',
+                        theme: 'monokai',
+                        lineNumbers: true,
+                        readOnly: true,
+                        viewportMargin: Infinity
+                    });
+                    
+                    // Store reference for copy functionality
+                    textarea.codeMirrorEditor = editor;
+                    textarea.setAttribute('data-codemirror-initialized', 'true');
+                    
+                    // Force refresh to ensure proper display
+                    setTimeout(() => {
+                        editor.refresh();
+                    }, 10);
+                });
+            }
+
+
+
+            hideLoading() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('website-content').style.display = 'block';
+            }
+
+            showError(message) {
+                const errorElement = document.getElementById('error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Global variable to access the manager instance
+        let websiteManager;
+
+        // Initialize the website details manager when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            websiteManager = new WebsiteDetailsManager();
+        });
+
+        // Global copy function for code blocks
+        function copyCode(codeId) {
+            const textarea = document.getElementById(codeId);
+            if (!textarea) return;
+
+            let code = '';
+            if (textarea.codeMirrorEditor) {
+                code = textarea.codeMirrorEditor.getValue();
+            } else {
+                code = textarea.value;
+            }
+
+            navigator.clipboard.writeText(code).then(() => {
+                // Find the copy button
+                const button = document.querySelector(`[onclick="copyCode('${codeId}')"]`);
+                if (button) {
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }
+            }).catch(err => {
+                    console.error('Failed to copy code:', err);
+            });
+        }
+
+                // Global variables for edit functionality
+        let editCodeMirror = null;
+        let currentEditCodeId = null;
+        let currentFieldKey = null;
+
+        // Global edit function for code blocks
+        function editCode(codeId, fieldKey) {
+            const textarea = document.getElementById(codeId);
+            if (!textarea) return;
+
+            let code = '';
+            if (textarea.codeMirrorEditor) {
+                code = textarea.codeMirrorEditor.getValue();
+            } else {
+                code = textarea.value;
+            }
+
+            // Store current edit info
+            currentEditCodeId = codeId;
+            currentFieldKey = fieldKey;
+
+            // Set modal title based on field type
+            const modalTitle = document.getElementById('edit-modal-title');
+            if (fieldKey === 'scraping_function') {
+                modalTitle.textContent = 'Edit Scraping Function';
+            } else if (fieldKey === 'scraper_string') {
+                modalTitle.textContent = 'Edit Detail Page Scraper String';
+            } else if (fieldKey === 'extra_data_function') {
+                modalTitle.textContent = 'Edit Extra Data Function';
+            } else if (fieldKey === 'pre_scrape_function') {
+                modalTitle.textContent = 'Edit Pre Scrape Function';
+            } else {
+                modalTitle.textContent = 'Edit Code';
+            }
+
+            // Set up the edit modal
+            const editTextarea = document.getElementById('edit-code-textarea');
+            editTextarea.value = code;
+
+            // Show the modal
+            const modal = document.getElementById('edit-code-modal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Initialize CodeMirror for editing
+                        setTimeout(() => {
+                if (editCodeMirror) {
+                    editCodeMirror.toTextArea();
+                }
+                
+                editCodeMirror = CodeMirror.fromTextArea(editTextarea, {
+                    mode: 'python',
+                    theme: 'monokai',
+                    lineNumbers: true,
+                    readOnly: false,
+                    viewportMargin: Infinity,
+                    autofocus: true
+                });
+                
+                editCodeMirror.refresh();
+            }, 100);
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            const modal = document.getElementById('edit-code-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            if (editCodeMirror) {
+                editCodeMirror.toTextArea();
+                editCodeMirror = null;
+            }
+            
+            currentEditCodeId = null;
+            currentFieldKey = null;
+        }
+
+        // Normalize tabs and spaces in code
+        function normalizeCode(code) {
+            // First, convert all tabs to spaces (4 spaces per tab)
+            let normalized = code.replace(/\t/g, '    ');
+            
+            // Split into lines and process each line
+            const lines = normalized.split('\n');
+            
+            // Find all unique indentation levels (excluding empty lines)
+            const nonEmptyLines = lines.filter(line => line.trim() !== '');
+            const indentLevels = new Set();
+            
+            nonEmptyLines.forEach(line => {
+                const leadingSpaces = line.match(/^[ ]*/)[0].length;
+                indentLevels.add(leadingSpaces);
+            });
+            
+            // Sort indentation levels
+            const sortedLevels = Array.from(indentLevels).sort((a, b) => a - b);
+            
+            // Create a mapping from old indentation to new indentation
+            const indentMap = new Map();
+            sortedLevels.forEach((level, index) => {
+                indentMap.set(level, index * 4); // Each level gets 4 spaces
+            });
+            
+            const processedLines = lines.map(line => {
+                // Preserve empty lines as-is
+                if (line.trim() === '') return line;
+                
+                // Get the leading spaces count
+                const leadingSpaces = line.match(/^[ ]*/)[0].length;
+                const content = line.substring(leadingSpaces);
+                
+                // Map to normalized indentation
+                const normalizedSpaces = indentMap.get(leadingSpaces) || 0;
+                const normalizedIndent = ' '.repeat(normalizedSpaces);
+                
+                return normalizedIndent + content;
+            });
+            
+            return processedLines.join('\n');
+        }
+
+        // Save code changes
+        async function saveCode() {
+            if (!editCodeMirror || !currentEditCodeId || !currentFieldKey) return;
+
+            const saveButton = document.getElementById('save-button');
+            const originalText = saveButton.textContent;
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+
+            try {
+                const rawCode = editCodeMirror.getValue();
+                const newCode = normalizeCode(rawCode);
+                const websiteName = websiteManager.websiteData.name; // Use the actual name from data, not URL
+
+                let endpoint, requestBody;
+
+                if (currentFieldKey === 'scraping_function') {
+                    endpoint = '/websites/update-list-page-scraping-function';
+                    requestBody = {
+                        website_name: websiteName,
+                        function: newCode
+                    };
+                } else if (currentFieldKey === 'scraper_string') {
+                    endpoint = '/websites/update-detail-page-scraper-string';
+                    requestBody = {
+                        website_name: websiteName,
+                        scraper_string: newCode
+                    };
+                } else if (currentFieldKey === 'extra_data_function') {
+                    endpoint = '/websites/update-list-page-extra-data-function';
+                    requestBody = {
+                        website_name: websiteName,
+                        function: newCode
+                    };
+                } else if (currentFieldKey === 'pre_scrape_function') {
+                    endpoint = '/websites/update-list-page-pre-scrape-function';
+                    requestBody = {
+                        website_name: websiteName,
+                        function: newCode
+                    };
+                } else {
+                    throw new Error('Unknown field type');
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Update the original CodeMirror editor
+                const originalTextarea = document.getElementById(currentEditCodeId);
+                if (originalTextarea && originalTextarea.codeMirrorEditor) {
+                    originalTextarea.codeMirrorEditor.setValue(newCode);
+                }
+
+                // Update the edit modal CodeMirror with normalized code
+                if (editCodeMirror) {
+                    editCodeMirror.setValue(newCode);
+                }
+
+                // Show success message
+                const wasNormalized = rawCode !== newCode;
+                saveButton.textContent = wasNormalized ? 'Saved & Normalized!' : 'Saved!';
+                saveButton.style.background = '#059669';
+                
+                setTimeout(() => {
+                    closeEditModal();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to save code:', error);
+                saveButton.textContent = 'Save Failed';
+                saveButton.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                    saveButton.style.background = '';
+                    saveButton.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Global config edit functions
+        function editListPageConfig() {
+            const config = websiteManager.websiteData.list_page_config;
+            if (!config) return;
+
+            // Populate form fields
+            document.getElementById('wait_type').value = config.wait_type || 'load state';
+            document.getElementById('wait_for').value = config.wait_for || 'domcontentloaded';
+            document.getElementById('browser_type').value = config.browser_type || 'chromium';
+            document.getElementById('use_route_intercept').checked = config.use_route_intercept || false;
+            document.getElementById('use_proxy').checked = config.use_proxy || false;
+            document.getElementById('bypass_cloudflare').checked = config.bypass_cloudflare || false;
+            document.getElementById('timeout').value = config.timeout || 90000;
+            
+            // Handle numeric fields properly - use !== null/undefined to include 0 values
+            document.getElementById('page_start').value = config.page_start !== null && config.page_start !== undefined ? config.page_start : '';
+            document.getElementById('page_step').value = config.page_step !== null && config.page_step !== undefined ? config.page_step : '';
+            document.getElementById('max_retries').value = config.max_retries !== null && config.max_retries !== undefined ? config.max_retries : '';
+            document.getElementById('max_pages').value = config.max_pages !== null && config.max_pages !== undefined ? config.max_pages : '';
+            
+            // Handle url_strings array
+            const urlStrings = config.url_strings || [];
+            document.getElementById('url_strings').value = urlStrings.join('\n');
+
+            // Show modal
+            const modal = document.getElementById('edit-config-modal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeConfigModal() {
+            const modal = document.getElementById('edit-config-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function editDetailPageConfig() {
+            const config = websiteManager.websiteData.detail_page_config;
+            if (!config) return;
+
+            // Populate form fields
+            document.getElementById('detail_wait_until').value = config.wait_until || 'load';
+            document.getElementById('detail_wait_for_selector').value = config.wait_for_selector || '';
+
+            // Show modal
+            const modal = document.getElementById('edit-detail-config-modal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailConfigModal() {
+            const modal = document.getElementById('edit-detail-config-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        async function saveDetailConfig() {
+            const saveButton = document.getElementById('save-detail-config-button');
+            const originalText = saveButton.textContent;
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+
+            try {
+                const websiteName = websiteManager.websiteData.name;
+                
+                // Get form values
+                const formData = {
+                    website_name: websiteName,
+                    wait_until: document.getElementById('detail_wait_until').value
+                };
+
+                // Add optional wait_for_selector if provided
+                const waitForSelector = document.getElementById('detail_wait_for_selector').value.trim();
+                if (waitForSelector) {
+                    formData.wait_for_selector = waitForSelector;
+                }
+
+                const response = await fetch('/websites/update-detail-page-config-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Reload the page data to show updated values
+                await websiteManager.loadWebsiteData();
+                websiteManager.renderWebsiteDetails();
+
+                // Ensure CodeMirror is properly reinitialized after DOM update
+                setTimeout(() => {
+                    websiteManager.initCodeMirror();
+                }, 200);
+
+                // Show success message
+                saveButton.textContent = 'Saved!';
+                saveButton.style.background = '#059669';
+                
+                setTimeout(() => {
+                    closeDetailConfigModal();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to save detail config:', error);
+                saveButton.textContent = 'Save Failed';
+                saveButton.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                    saveButton.style.background = '';
+                    saveButton.disabled = false;
+                }, 2000);
+            }
+        }
+
+        function editDefaults() {
+            const config = websiteManager.websiteData.detail_page_config;
+            if (!config) return;
+
+            const defaults = config.defaults || {};
+
+            // Populate form fields
+            document.getElementById('default_location').value = defaults.location || '';
+            document.getElementById('default_country').value = defaults.country || '';
+            document.getElementById('default_currency').value = defaults.currency || '';
+
+            // Show modal
+            const modal = document.getElementById('edit-defaults-modal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDefaultsModal() {
+            const modal = document.getElementById('edit-defaults-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        async function saveDefaults() {
+            const saveButton = document.getElementById('save-defaults-button');
+            const originalText = saveButton.textContent;
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+
+            try {
+                const websiteName = websiteManager.websiteData.name;
+                
+                // Get form values
+                const formData = {
+                    website_name: websiteName,
+                    location: document.getElementById('default_location').value.trim() || null,
+                    country: document.getElementById('default_country').value.trim() || null,
+                    currency: document.getElementById('default_currency').value.trim() || null
+                };
+
+                const response = await fetch('/websites/update-defaults', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Reload the page data to show updated values
+                await websiteManager.loadWebsiteData();
+                websiteManager.renderWebsiteDetails();
+
+                // Ensure CodeMirror is properly reinitialized after DOM update
+                setTimeout(() => {
+                    websiteManager.initCodeMirror();
+                }, 200);
+
+                // Show success message
+                saveButton.textContent = 'Saved!';
+                saveButton.style.background = '#059669';
+                
+                setTimeout(() => {
+                    closeDefaultsModal();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to save defaults:', error);
+                saveButton.textContent = 'Save Failed';
+                saveButton.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                    saveButton.style.background = '';
+                    saveButton.disabled = false;
+                }, 2000);
+            }
+        }
+
+        async function saveConfig() {
+            const saveButton = document.getElementById('save-config-button');
+            const originalText = saveButton.textContent;
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+
+            try {
+                const websiteName = websiteManager.websiteData.name;
+                
+                // Get form values
+                const formData = {
+                    website_name: websiteName,
+                    wait_type: document.getElementById('wait_type').value,
+                    wait_for: document.getElementById('wait_for').value,
+                    use_route_intercept: document.getElementById('use_route_intercept').checked,
+                    browser_type: document.getElementById('browser_type').value,
+                    use_proxy: document.getElementById('use_proxy').checked,
+                    bypass_cloudflare: document.getElementById('bypass_cloudflare').checked,
+                    timeout: parseInt(document.getElementById('timeout').value),
+                    url_strings: document.getElementById('url_strings').value
+                        .split('\n')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0)
+                };
+
+                // Add optional numeric fields
+                const pageStart = document.getElementById('page_start').value;
+                if (pageStart) formData.page_start = parseInt(pageStart);
+
+                const pageStep = document.getElementById('page_step').value;
+                if (pageStep) formData.page_step = parseInt(pageStep);
+
+                const maxRetries = document.getElementById('max_retries').value;
+                if (maxRetries) formData.max_retries = parseInt(maxRetries);
+
+                const maxPages = document.getElementById('max_pages').value;
+                if (maxPages) formData.max_pages = parseInt(maxPages);
+
+                const response = await fetch('/websites/update-list-page-config-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Reload the page data to show updated values
+                await websiteManager.loadWebsiteData();
+                websiteManager.renderWebsiteDetails();
+
+                // Ensure CodeMirror is properly reinitialized after DOM update
+                setTimeout(() => {
+                    websiteManager.initCodeMirror();
+                }, 200);
+
+                // Show success message
+                saveButton.textContent = 'Saved!';
+                saveButton.style.background = '#059669';
+                
+                setTimeout(() => {
+                    closeConfigModal();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to save config:', error);
+                saveButton.textContent = 'Save Failed';
+                saveButton.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                    saveButton.style.background = '';
+                    saveButton.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Global modal functions
+        function openDataModal(pageUrl) {
+            const page = websiteManager.findPageByUrl(pageUrl);
+            if (!page || !page.extracted_data) return;
+
+            const modal = document.getElementById('data-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+
+            modalTitle.textContent = `Data for: ${new URL(pageUrl).pathname}`;
+            modalContent.innerHTML = generateModalContent(page.extracted_data);
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Initialize carousel if images exist
+            initializeCarousel();
+        }
+
+        function closeDataModal() {
+            const modal = document.getElementById('data-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function openJsonDataModal(pageUrl) {
+            const page = websiteManager.findPageByUrl(pageUrl);
+            if (!page || !page.extracted_data) return;
+
+            const modal = document.getElementById('json-data-modal');
+            const modalTitle = document.getElementById('json-modal-title');
+            const jsonContent = document.getElementById('json-content');
+
+            modalTitle.textContent = `Raw JSON Data for: ${new URL(pageUrl).pathname}`;
+            
+            // Format the extracted data as pretty JSON
+            const formattedJson = JSON.stringify(page.extracted_data, null, 2);
+            jsonContent.textContent = formattedJson;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeJsonDataModal() {
+            const modal = document.getElementById('json-data-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function copyJsonData() {
+            const jsonContent = document.getElementById('json-content');
+            const text = jsonContent.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const button = document.querySelector('.copy-json-btn');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#059669';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy JSON:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const button = document.querySelector('.copy-json-btn');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#059669';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function generateModalContent(data) {
+            let html = '';
+
+            // Image carousel
+            const images = data.image_urls || [];
+            if (images.length > 0) {
+                html += `
+                    <div class="image-carousel">
+                        <div class="carousel-container">
+                            ${images.map((img, index) => `
+                                <img src="${img}" alt="Image ${index + 1}" class="carousel-image ${index === 0 ? 'active' : ''}" 
+                                     onerror="this.style.display='none'">
+                            `).join('')}
+                            ${images.length > 1 ? `
+                                <button class="carousel-nav prev" onclick="prevImage()">‹</button>
+                                <button class="carousel-nav next" onclick="nextImage()">›</button>
+                            ` : ''}
+                        </div>
+                        ${images.length > 1 ? `
+                            <div class="carousel-indicators">
+                                ${images.map((_, index) => `
+                                    <div class="carousel-indicator ${index === 0 ? 'active' : ''}" onclick="goToImage(${index})"></div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="image-carousel">
+                        <div class="no-images">
+                            📷 No images available for this page
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Data grid
+            html += '<div class="data-grid">';
+
+            // Only exclude vector fields and image URLs from display
+            const excludeFields = ['style_vector', 'style_vector_v2', 'image_urls', 'image_download_urls'];
+            
+            // Process main data fields first
+            for (const [key, value] of Object.entries(data)) {
+                if (excludeFields.includes(key)) continue;
+
+                // Skip inference_result here, we'll handle it separately
+                if (key === 'inference_result') continue;
+
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                let displayValue = value;
+                let valueClass = 'data-value';
+
+                if (value === null || value === undefined) {
+                    valueClass += ' empty';
+                    displayValue = 'Not available';
+                } else if (typeof value === 'boolean') {
+                    valueClass += ` boolean ${value}`;
+                    displayValue = value ? 'Yes' : 'No';
+                } else if (key === 'price' && value) {
+                    valueClass += ' currency';
+                    displayValue = `${data.currency || '$'}${value.toLocaleString()}`;
+                } else if (typeof value === 'number') {
+                    displayValue = value.toLocaleString();
+                } else if (typeof value === 'string' && value.length === 0) {
+                    valueClass += ' empty';
+                    displayValue = 'Not specified';
+                } else if (Array.isArray(value)) {
+                    displayValue = value.length > 0 ? value.join(', ') : 'None';
+                } else if (typeof value === 'string') {
+                    displayValue = value;
+                }
+
+                html += `
+                    <div class="data-item">
+                        <div class="data-label">${formattedKey}</div>
+                        <div class="${valueClass}">${displayValue}</div>
+                    </div>
+                `;
+            }
+
+            // Handle inference_result separately if it exists
+            if (data.inference_result) {
+                const inferenceData = data.inference_result;
+                for (const [key, value] of Object.entries(inferenceData)) {
+                    // Skip vector fields in inference results
+                    if (key.includes('vector')) continue;
+
+                    const formattedKey = `Inference ${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+                    let displayValue = value;
+                    let valueClass = 'data-value';
+
+                    if (value === null || value === undefined) {
+                        valueClass += ' empty';
+                        displayValue = 'Not available';
+                    } else if (typeof value === 'string' && value.length === 0) {
+                        valueClass += ' empty';
+                        displayValue = 'Not specified';
+                    } else {
+                        displayValue = value;
+                    }
+
+                    html += `
+                        <div class="data-item">
+                            <div class="data-label">${formattedKey}</div>
+                            <div class="${valueClass}">${displayValue}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        let currentImageIndex = 0;
+
+        function initializeCarousel() {
+            currentImageIndex = 0;
+            updateCarouselDisplay();
+        }
+
+        function nextImage() {
+            const images = document.querySelectorAll('.carousel-image');
+            if (images.length <= 1) return;
+            
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            updateCarouselDisplay();
+        }
+
+        function prevImage() {
+            const images = document.querySelectorAll('.carousel-image');
+            if (images.length <= 1) return;
+            
+            currentImageIndex = currentImageIndex === 0 ? images.length - 1 : currentImageIndex - 1;
+            updateCarouselDisplay();
+        }
+
+        function goToImage(index) {
+            currentImageIndex = index;
+            updateCarouselDisplay();
+        }
+
+        function updateCarouselDisplay() {
+            const images = document.querySelectorAll('.carousel-image');
+            const indicators = document.querySelectorAll('.carousel-indicator');
+
+            images.forEach((img, index) => {
+                img.classList.toggle('active', index === currentImageIndex);
+            });
+
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentImageIndex);
+            });
+        }
+
+        // Global management functions
+        function deleteAllHtml() {
+            // Show confirmation modal
+            const modal = document.getElementById('delete-confirmation-modal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteConfirmationModal() {
+            const modal = document.getElementById('delete-confirmation-modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        async function confirmDeleteAllHtml() {
+            const button = document.getElementById('confirm-delete-button');
+            const originalText = button.textContent;
+            
+            try {
+                button.disabled = true;
+                button.textContent = 'Deleting...';
+                button.style.background = '#6b7280';
+
+                const websiteName = websiteManager.websiteData.name;
+                
+                const response = await fetch('/websites/delete-all-html-for-website', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        website_name: websiteName
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                // Reload the page data to show updated statistics
+                await websiteManager.loadWebsiteData();
+                websiteManager.renderWebsiteDetails();
+
+                // Show success message
+                button.textContent = 'Deleted!';
+                button.style.background = '#059669';
+                
+                setTimeout(() => {
+                    closeDeleteConfirmationModal();
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to delete HTML:', error);
+                button.textContent = 'Delete Failed';
+                button.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#ef4444';
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const dataModal = document.getElementById('data-modal');
+            const jsonDataModal = document.getElementById('json-data-modal');
+            const editModal = document.getElementById('edit-code-modal');
+            const configModal = document.getElementById('edit-config-modal');
+            const detailConfigModal = document.getElementById('edit-detail-config-modal');
+            const deleteModal = document.getElementById('delete-confirmation-modal');
+            
+            if (e.target === dataModal) {
+                closeDataModal();
+            }
+            if (e.target === jsonDataModal) {
+                closeJsonDataModal();
+            }
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+            if (e.target === configModal) {
+                closeConfigModal();
+            }
+            if (e.target === detailConfigModal) {
+                closeDetailConfigModal();
+            }
+            if (e.target === deleteModal) {
+                closeDeleteConfirmationModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const dataModal = document.getElementById('data-modal');
+                const jsonDataModal = document.getElementById('json-data-modal');
+                const editModal = document.getElementById('edit-code-modal');
+                const configModal = document.getElementById('edit-config-modal');
+                const detailConfigModal = document.getElementById('edit-detail-config-modal');
+                const deleteModal = document.getElementById('delete-confirmation-modal');
+                
+                if (deleteModal.classList.contains('active')) {
+                    closeDeleteConfirmationModal();
+                } else if (detailConfigModal.classList.contains('active')) {
+                    closeDetailConfigModal();
+                } else if (configModal.classList.contains('active')) {
+                    closeConfigModal();
+                } else if (editModal.classList.contains('active')) {
+                    closeEditModal();
+                } else if (jsonDataModal.classList.contains('active')) {
+                    closeJsonDataModal();
+                } else if (dataModal.classList.contains('active')) {
+                closeDataModal();
+                }
+            }
+        });
+    </script>
+    
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+</body>
+</html>

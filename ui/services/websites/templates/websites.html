@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Websites Management - Scraper Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --light-bg: #0f172a;
+            --dark-bg: #020617;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            --card-hover-bg: #2d3748;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gradient-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, var(--accent-glow) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-section {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-box::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+
+        .tag-filter, .error-type-filter {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .tag-filter:hover, .error-type-filter:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tag-filter.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .error-type-filter.active {
+            background: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .error-type-filter:hover:not(.active) {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .tag-filters, .error-type-filters, .special-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .special-filter {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .special-filter:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .special-filter.active {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .error-mode-toggle {
+            display: flex;
+            align-items: center;
+            margin-left: 1rem;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .toggle-slider {
+            position: relative;
+            width: 36px;
+            height: 18px;
+            background-color: var(--border-color);
+            border-radius: 18px;
+            margin-right: 0.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-label input[type="checkbox"]:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        .toggle-label input[type="checkbox"]:checked + .toggle-slider::before {
+            transform: translateX(18px);
+        }
+
+        .toggle-text {
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .clear-filters {
+            padding: 0.5rem 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.5rem;
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-filters:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .websites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .website-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .website-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+            opacity: 0.7;
+        }
+
+        .website-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(59, 130, 246, 0.1),
+                0 0 20px rgba(59, 130, 246, 0.1);
+            background: var(--card-hover-bg);
+        }
+
+        .website-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .website-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-button {
+            padding: 0.5rem 0.75rem;
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .upload-button:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .upload-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .upload-button:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .upload-button .upload-icon {
+            font-size: 0.9rem;
+        }
+
+        .website-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .website-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .website-status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .website-url {
+            color: var(--info-color);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            word-break: break-all;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .website-url:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .website-info {
+            margin-top: 1rem;
+        }
+
+        .pages-count {
+            padding: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .pages-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .pages-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .pages-column {
+            text-align: center;
+        }
+
+        .pages-column-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pages-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .pages-value.previous {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .pages-change {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+
+        .pages-change.positive {
+            color: var(--success-color);
+        }
+
+        .pages-change.negative {
+            color: var(--danger-color);
+        }
+
+        .pages-change.neutral {
+            color: var(--text-secondary);
+        }
+
+        .errors-section {
+            margin-top: 1rem;
+        }
+
+        .errors-header {
+            padding: 0.75rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.5rem 0.5rem 0 0;
+            border-bottom: none;
+        }
+
+        .errors-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .errors-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .errors-column {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+
+        .errors-column-header {
+            padding: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+            text-align: center;
+        }
+
+        .errors-column-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .errors-list {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0 0 0.5rem 0.5rem;
+            border-top: none;
+        }
+
+        .error-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+            font-size: 0.85rem;
+        }
+
+        .error-item:last-child {
+            border-bottom: none;
+        }
+
+        .error-name {
+            color: var(--text-primary);
+            flex: 1;
+            margin-right: 0.5rem;
+            word-break: break-word;
+        }
+
+        .error-count-badge {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .error-count-badge.previous {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .error-count-badge.increased {
+            background: rgba(220, 38, 38, 0.3);
+            color: #fca5a5;
+            border: 1px solid #dc2626;
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+            animation: pulse-red 2s infinite;
+        }
+
+        .error-item.increased {
+            background: rgba(220, 38, 38, 0.1);
+            border-left: 3px solid #dc2626;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 12px rgba(220, 38, 38, 0.6);
+            }
+        }
+
+        .no-errors {
+            padding: 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: var(--success-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-link {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            padding: 0.75rem 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+
+        .nav-link:hover {
+            background: var(--card-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .websites-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-section {
+                min-width: unset;
+            }
+
+            .filter-section {
+                justify-content: center;
+            }
+
+            .error-mode-toggle {
+                margin-left: 0.5rem;
+                margin-top: 0.5rem;
+            }
+
+            .toggle-text {
+                font-size: 0.75rem;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+            }
+
+            .website-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-link {
+                position: static;
+                margin-bottom: 1rem;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/monitoring" class="nav-link">← Back to Monitoring</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Websites Management</h1>
+            <p>Manage and monitor your scraped websites</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-section">
+                <input type="text" id="search-box" class="search-box" placeholder="Search websites by name or URL...">
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Filter by tag:</span>
+                <div id="tag-filters" class="tag-filters">
+                    <!-- Tags will be loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Filter by error type:</span>
+                <div id="error-type-filters" class="error-type-filters">
+                    <!-- Error types will be loaded dynamically -->
+                </div>
+                <div class="error-mode-toggle" id="error-mode-toggle" style="display: none;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="error-mode-checkbox" />
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">All websites have error</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Special filters:</span>
+                <div id="special-filters" class="special-filters">
+                    <div id="no-pages-filter" class="special-filter">
+                        Websites with No Pages
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <span class="filter-label">Last scrape status:</span>
+                <div id="scrape-status-filters" class="special-filters">
+                    <div id="scrape-status-all" class="special-filter active">
+                        All
+                    </div>
+                    <div id="scrape-status-valid" class="special-filter">
+                        Valid
+                    </div>
+                    <div id="scrape-status-invalid" class="special-filter">
+                        Invalid
+                    </div>
+                </div>
+                <button id="clear-filters" class="clear-filters" style="display: none;">Clear All Filters</button>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="total-websites">0</div>
+                <div class="stat-label">Total Websites</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-pages">0</div>
+                <div class="stat-label">Total Pages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="filtered-count">0</div>
+                <div class="stat-label">Showing</div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading websites...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="no-results" class="no-results" style="display: none;">
+            <div class="no-results-icon">🔍</div>
+            <h3>No websites found</h3>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+
+        <div id="websites-grid" class="websites-grid">
+            <!-- Website cards will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        class WebsiteManager {
+            constructor() {
+                this.allWebsites = [];
+                this.filteredWebsites = [];
+                this.allTags = [];
+                this.allErrorTypes = [];
+                this.activeTagFilters = new Set();
+                this.activeErrorTypeFilters = new Set();
+                this.searchQuery = '';
+                this.noPagesFilterActive = false;
+                this.errorFilterMode = 'any'; // 'any' or 'all'
+                this.scrapeStatusFilter = 'all'; // 'all', 'valid', 'invalid'
+
+                this.init();
+            }
+
+            async init() {
+                await this.loadTags();
+                await this.loadErrorTypes();
+                await this.loadWebsites();
+                this.setupEventListeners();
+                this.updateErrorModeToggleVisibility(); // Initialize toggle visibility
+            }
+
+            async loadTags() {
+                try {
+                    const response = await fetch('/websites/tags');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    this.allTags = await response.json();
+                    this.renderTagFilters();
+                } catch (error) {
+                    console.error('Failed to load tags:', error);
+                }
+            }
+
+            async loadErrorTypes() {
+                try {
+                    const response = await fetch('/websites/error-types');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    this.allErrorTypes = await response.json();
+                    this.renderErrorTypeFilters();
+                } catch (error) {
+                    console.error('Failed to load error types:', error);
+                }
+            }
+
+            async loadWebsites() {
+                try {
+                    const response = await fetch('/websites/all');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    this.allWebsites = await response.json();
+                    this.filteredWebsites = [...this.allWebsites];
+                    
+                    this.hideLoading();
+                    this.renderWebsites();
+                    this.updateStats();
+                } catch (error) {
+                    this.showError(`Failed to load websites: ${error.message}`);
+                }
+            }
+
+            renderTagFilters() {
+                const container = document.getElementById('tag-filters');
+                container.innerHTML = '';
+
+                this.allTags.forEach(tag => {
+                    const tagElement = document.createElement('div');
+                    tagElement.className = 'tag-filter';
+                    tagElement.textContent = tag;
+                    tagElement.addEventListener('click', () => this.toggleTagFilter(tag));
+                    container.appendChild(tagElement);
+                });
+            }
+
+            renderErrorTypeFilters() {
+                const container = document.getElementById('error-type-filters');
+                container.innerHTML = '';
+
+                this.allErrorTypes.forEach(errorType => {
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'error-type-filter';
+                    errorElement.textContent = errorType;
+                    errorElement.addEventListener('click', () => this.toggleErrorTypeFilter(errorType));
+                    container.appendChild(errorElement);
+                });
+            }
+
+            toggleTagFilter(tag) {
+                if (this.activeTagFilters.has(tag)) {
+                    this.activeTagFilters.delete(tag);
+                } else {
+                    this.activeTagFilters.add(tag);
+                }
+                
+                this.updateFilterUI();
+                this.applyFilters();
+            }
+
+            toggleErrorTypeFilter(errorType) {
+                if (this.activeErrorTypeFilters.has(errorType)) {
+                    this.activeErrorTypeFilters.delete(errorType);
+                } else {
+                    this.activeErrorTypeFilters.add(errorType);
+                }
+                
+                this.updateErrorModeToggleVisibility();
+                this.updateFilterUI();
+                this.applyFilters();
+            }
+
+            toggleNoPagesFilter() {
+                this.noPagesFilterActive = !this.noPagesFilterActive;
+                this.updateFilterUI();
+                this.applyFilters();
+            }
+
+            setScrapeStatusFilter(status) {
+                this.scrapeStatusFilter = status;
+                this.updateFilterUI();
+                this.applyFilters();
+            }
+
+            updateErrorModeToggleVisibility() {
+                const errorModeToggle = document.getElementById('error-mode-toggle');
+                
+                // Show toggle only when error type filters are active
+                const shouldShowToggle = this.activeErrorTypeFilters.size > 0;
+                
+                errorModeToggle.style.display = shouldShowToggle ? 'flex' : 'none';
+                
+                // Update toggle text based on current mode
+                this.updateToggleText();
+            }
+
+            updateToggleText() {
+                const toggleText = document.querySelector('.toggle-text');
+                const errorModeCheckbox = document.getElementById('error-mode-checkbox');
+                
+                if (this.errorFilterMode === 'all') {
+                    toggleText.textContent = 'All websites have error';
+                    errorModeCheckbox.checked = true;
+                } else {
+                    toggleText.textContent = 'Any website has error';
+                    errorModeCheckbox.checked = false;
+                }
+            }
+
+            updateFilterUI() {
+                // Update tag filters
+                const tagElements = document.querySelectorAll('.tag-filter');
+                tagElements.forEach(element => {
+                    if (this.activeTagFilters.has(element.textContent)) {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                });
+
+                // Update error type filters
+                const errorTypeElements = document.querySelectorAll('.error-type-filter');
+                errorTypeElements.forEach(element => {
+                    if (this.activeErrorTypeFilters.has(element.textContent)) {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                });
+
+                // Update no pages filter
+                const noPagesFilter = document.getElementById('no-pages-filter');
+                if (this.noPagesFilterActive) {
+                    noPagesFilter.classList.add('active');
+                } else {
+                    noPagesFilter.classList.remove('active');
+                }
+
+                // Update scrape status filters
+                const scrapeStatusFilters = document.querySelectorAll('#scrape-status-filters .special-filter');
+                scrapeStatusFilters.forEach(element => {
+                    const status = element.id.replace('scrape-status-', '');
+                    if (status === this.scrapeStatusFilter) {
+                        element.classList.add('active');
+                    } else {
+                        element.classList.remove('active');
+                    }
+                });
+
+                // Show/hide clear button
+                const clearButton = document.getElementById('clear-filters');
+                const hasActiveFilters = this.activeTagFilters.size > 0 || this.activeErrorTypeFilters.size > 0 || this.noPagesFilterActive || this.scrapeStatusFilter !== 'all';
+                clearButton.style.display = hasActiveFilters ? 'block' : 'none';
+            }
+
+            clearFilters() {
+                this.activeTagFilters.clear();
+                this.activeErrorTypeFilters.clear();
+                this.noPagesFilterActive = false;
+                this.errorFilterMode = 'any';
+                this.scrapeStatusFilter = 'all';
+                this.searchQuery = '';
+                document.getElementById('search-box').value = '';
+                this.updateErrorModeToggleVisibility();
+                this.updateFilterUI();
+                this.applyFilters();
+            }
+
+            applyFilters() {
+                this.filteredWebsites = this.allWebsites.filter(website => {
+                    // Apply tag filters
+                    if (this.activeTagFilters.size > 0) {
+                        const hasMatchingTag = website.tags.some(tag => this.activeTagFilters.has(tag));
+                        if (!hasMatchingTag) return false;
+                    }
+
+                    // Apply error type filters
+                    if (this.activeErrorTypeFilters.size > 0) {
+                        const websiteErrors = website.errors || {};
+                        const totalPages = website.pages || 0;
+                        console.log(`Filtering ${website.name}: mode=${this.errorFilterMode}, websiteErrors=${JSON.stringify(websiteErrors)}, totalPages=${totalPages}, activeFilters=${JSON.stringify(Array.from(this.activeErrorTypeFilters))}`); // Debug log
+                        
+                        if (this.errorFilterMode === 'all') {
+                            // Show websites where ALL pages have the selected error(s)
+                            // For each selected error type, check if error count equals total pages
+                            const allPagesHaveSelectedErrors = Array.from(this.activeErrorTypeFilters).every(errorType => {
+                                const errorCount = websiteErrors[errorType] || 0;
+                                const allPagesHaveThisError = errorCount === totalPages && totalPages > 0;
+                                console.log(`${website.name} - ${errorType}: ${errorCount}/${totalPages} pages, allPagesHaveThisError: ${allPagesHaveThisError}`); // Debug log
+                                return allPagesHaveThisError;
+                            });
+                            console.log(`${website.name} allPagesHaveSelectedErrors: ${allPagesHaveSelectedErrors}`); // Debug log
+                            if (!allPagesHaveSelectedErrors) return false;
+                        } else {
+                            // Show websites where ANY page has the selected error types
+                            const hasMatchingError = Array.from(this.activeErrorTypeFilters).some(errorType => {
+                                const errorCount = websiteErrors[errorType] || 0;
+                                return errorCount > 0;
+                            });
+                            console.log(`${website.name} hasMatchingError: ${hasMatchingError}`); // Debug log
+                            if (!hasMatchingError) return false;
+                        }
+                    }
+
+                    // Apply no pages filter
+                    if (this.noPagesFilterActive) {
+                        if (website.pages > 0) return false;
+                    }
+
+                    // Apply scrape status filter
+                    if (this.scrapeStatusFilter !== 'all') {
+                        const isValid = website.last_scrape_valid === true;
+                        if (this.scrapeStatusFilter === 'valid' && !isValid) return false;
+                        if (this.scrapeStatusFilter === 'invalid' && isValid) return false;
+                    }
+
+                    // Apply search filter
+                    if (this.searchQuery) {
+                        const searchLower = this.searchQuery.toLowerCase();
+                        const nameMatch = website.name.toLowerCase().includes(searchLower);
+                        const urlMatch = website.url.toLowerCase().includes(searchLower);
+                        if (!nameMatch && !urlMatch) return false;
+                    }
+
+                    return true;
+                });
+
+                this.renderWebsites();
+                this.updateStats();
+            }
+
+            renderWebsites() {
+                const container = document.getElementById('websites-grid');
+                const noResults = document.getElementById('no-results');
+
+                if (this.filteredWebsites.length === 0) {
+                    container.style.display = 'none';
+                    noResults.style.display = 'block';
+                    return;
+                }
+
+                container.style.display = 'grid';
+                noResults.style.display = 'none';
+                container.innerHTML = '';
+
+                this.filteredWebsites.forEach(website => {
+                    const card = this.createWebsiteCard(website);
+                    container.appendChild(card);
+                });
+                
+                // Setup upload button event listeners
+                this.setupUploadButtonListeners();
+            }
+
+            setupUploadButtonListeners() {
+                const uploadButtons = document.querySelectorAll('.upload-button');
+                uploadButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const websiteName = button.getAttribute('data-website-name');
+                        
+                        // Find the website data for this upload
+                        const websiteData = this.filteredWebsites.find(w => w.name === websiteName);
+                        this.uploadWebsite(websiteName, websiteData, button);
+                    });
+                });
+            }
+
+            async uploadWebsite(websiteName, websiteData, button) {
+                // Disable button and show loading state
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.innerHTML = `
+                    <span class="upload-icon">⏳</span>
+                    Uploading...
+                `;
+
+                try {
+                    // Extract current listing count and error counts from website data
+                    const newListingCount = websiteData?.pages || 0;
+                    const newErrorCounts = websiteData?.errors || {};
+
+                    const response = await fetch('/websites/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            website_name: websiteName,
+                            new_listing_count: newListingCount,
+                            new_error_counts: newErrorCounts
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    // Show success state
+                    button.innerHTML = `
+                        <span class="upload-icon">✅</span>
+                        Success!
+                    `;
+                    
+                    // Reload website data to reflect updated last_scrape_valid status
+                    await this.loadWebsites();
+                    // Re-apply current filters to show the updated data correctly
+                    this.applyFilters();
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    
+                    // Show error state
+                    button.innerHTML = `
+                        <span class="upload-icon">❌</span>
+                        Failed
+                    `;
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+                    }, 3000);
+                }
+            }
+
+            createWebsiteCard(website) {
+                const card = document.createElement('div');
+                card.className = 'website-card';
+
+                const nameInitials = website.name.split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+
+                // Calculate page change
+                const currentPages = website.pages || 0;
+                const previousPages = website.previous_pages || 0;
+                const pageChange = currentPages - previousPages;
+                let pageChangeHtml = '';
+                if (pageChange > 0) {
+                    pageChangeHtml = `<div class="pages-change positive">+${pageChange}</div>`;
+                } else if (pageChange < 0) {
+                    pageChangeHtml = `<div class="pages-change negative">${pageChange}</div>`;
+                } else {
+                    pageChangeHtml = `<div class="pages-change neutral">No change</div>`;
+                }
+
+                // Generate errors HTML with comparison
+                let errorsHtml = '';
+                const currentErrors = website.errors || {};
+                const previousErrors = website.previous_errors || {};
+                const allErrorTypes = new Set([...Object.keys(currentErrors), ...Object.keys(previousErrors)]);
+
+                if (allErrorTypes.size > 0) {
+                    const previousErrorItems = Array.from(allErrorTypes)
+                        .map(errorName => {
+                            const count = previousErrors[errorName] || 0;
+                            return `
+                                <div class="error-item">
+                                    <span class="error-name">${errorName}</span>
+                                    <span class="error-count-badge previous">${count}</span>
+                                </div>
+                            `;
+                        }).join('');
+
+                    const currentErrorItems = Array.from(allErrorTypes)
+                        .map(errorName => {
+                            const currentCount = currentErrors[errorName] || 0;
+                            const previousCount = previousErrors[errorName] || 0;
+                            const hasIncreased = currentCount > previousCount;
+                            
+                            const itemClass = hasIncreased ? 'error-item increased' : 'error-item';
+                            const badgeClass = hasIncreased ? 'error-count-badge increased' : 'error-count-badge';
+                            
+                            return `
+                                <div class="${itemClass}">
+                                    <span class="error-name">${errorName}</span>
+                                    <span class="${badgeClass}">${currentCount}</span>
+                                </div>
+                            `;
+                        }).join('');
+
+                    errorsHtml = `
+                        <div class="errors-section">
+                            <div class="errors-header">
+                                <span class="errors-label">Errors</span>
+                                <div class="errors-comparison">
+                                    <div class="errors-column">
+                                        <div class="errors-column-header">
+                                            <div class="errors-column-label">Previous</div>
+                                        </div>
+                                        <div class="errors-column-content">
+                                            ${previousErrorItems || '<div class="error-item"><span class="error-name">No errors</span></div>'}
+                                        </div>
+                                    </div>
+                                    <div class="errors-column">
+                                        <div class="errors-column-header">
+                                            <div class="errors-column-label">Current</div>
+                                        </div>
+                                        <div class="errors-column-content">
+                                            ${currentErrorItems || '<div class="error-item"><span class="error-name">No errors</span></div>'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    errorsHtml = `
+                        <div class="no-errors">
+                            ✓ No errors detected
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="website-header">
+                        <div class="website-name">
+                            <div class="website-icon">${nameInitials}</div>
+                            <a href="/websites/website/${encodeURIComponent(website.name)}" style="color: inherit; text-decoration: none;">
+                                ${website.name}
+                            </a>
+                        </div>
+                        <button class="upload-button" data-website-name="${website.name}" title="Upload website data">
+                            <span class="upload-icon">⬆️</span>
+                            Upload
+                        </button>
+                    </div>
+                    
+                    <a href="${website.url}" target="_blank" class="website-url" title="Visit website">
+                        ${website.url}
+                    </a>
+                    
+                    <div class="pages-count">
+                        <div class="pages-label">Pages</div>
+                        <div class="pages-comparison">
+                            <div class="pages-column">
+                                <div class="pages-column-label">Previous</div>
+                                <div class="pages-value previous">${previousPages}</div>
+                            </div>
+                            <div class="pages-column">
+                                <div class="pages-column-label">Current</div>
+                                <div class="pages-value">${currentPages}</div>
+                                ${pageChangeHtml}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${errorsHtml}
+                    
+                    <div style="margin-top: 1rem; text-align: center;">
+                        <a href="/websites/website/${encodeURIComponent(website.name)}" 
+                           style="padding: 0.5rem 1rem; background: var(--primary-color); color: white; text-decoration: none; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; display: inline-block;">
+                            View Details →
+                        </a>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            updateStats() {
+                const totalPages = this.allWebsites.reduce((sum, website) => sum + (website.pages || 0), 0);
+                
+                document.getElementById('total-websites').textContent = this.allWebsites.length;
+                document.getElementById('total-pages').textContent = totalPages;
+                document.getElementById('filtered-count').textContent = this.filteredWebsites.length;
+            }
+
+            setupEventListeners() {
+                const searchBox = document.getElementById('search-box');
+                searchBox.addEventListener('input', (e) => {
+                    this.searchQuery = e.target.value;
+                    this.applyFilters();
+                });
+
+                const clearButton = document.getElementById('clear-filters');
+                clearButton.addEventListener('click', () => this.clearFilters());
+
+                const noPagesFilter = document.getElementById('no-pages-filter');
+                noPagesFilter.addEventListener('click', () => this.toggleNoPagesFilter());
+
+                // Setup scrape status filter listeners
+                const scrapeStatusAll = document.getElementById('scrape-status-all');
+                const scrapeStatusValid = document.getElementById('scrape-status-valid');
+                const scrapeStatusInvalid = document.getElementById('scrape-status-invalid');
+                
+                scrapeStatusAll.addEventListener('click', () => this.setScrapeStatusFilter('all'));
+                scrapeStatusValid.addEventListener('click', () => this.setScrapeStatusFilter('valid'));
+                scrapeStatusInvalid.addEventListener('click', () => this.setScrapeStatusFilter('invalid'));
+
+                const errorModeCheckbox = document.getElementById('error-mode-checkbox');
+                errorModeCheckbox.addEventListener('change', (e) => {
+                    this.errorFilterMode = e.target.checked ? 'all' : 'any';
+                    console.log('Error filter mode changed to:', this.errorFilterMode); // Debug log
+                    this.updateToggleText();
+                    this.applyFilters();
+                });
+            }
+
+            hideLoading() {
+                document.getElementById('loading').style.display = 'none';
+            }
+
+            showError(message) {
+                const errorElement = document.getElementById('error');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                this.hideLoading();
+            }
+        }
+
+        // Initialize the website manager when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new WebsiteManager();
+        });
+    </script>
+</body>
+</html>
