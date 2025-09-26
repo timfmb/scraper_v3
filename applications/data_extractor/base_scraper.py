@@ -12,6 +12,10 @@ from interfaces.inference_manager import InferenceRunner
 from applications.data_extractor.model_validation.validation_manager import MODEL_VALIDATION_MANAGER
 from applications.data_extractor.validation.validation import validate_listing
 from applications.uploader import service as uploader_service
+import markdownify as md
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 class BaseScraper:
     def __init__(
@@ -22,6 +26,10 @@ class BaseScraper:
         self.website = get_website_by_name(self.website_name)
 
 
+    def get_section_soup(self, soup):
+        return str(soup)
+
+
     def get_features(self, soup):
         feature_extractor = FeatureExtractor()
         features = feature_extractor.extract_features(soup)
@@ -29,10 +37,16 @@ class BaseScraper:
 
     def extract_title(self, soup, features, list_page_data):
         if features.get('MAKE_DETAILS') and features.get('MODEL_DETAILS'):
+            if features.get('PART_SHARE_DETAILS'):
+                return features.get('MAKE_DETAILS') + ' ' + features.get('MODEL_DETAILS') + ' ' + features.get('PART_SHARE_DETAILS')
             return features.get('MAKE_DETAILS') + ' ' + features.get('MODEL_DETAILS')
         elif features.get('MAKE_DETAILS'):
+            if features.get('PART_SHARE_DETAILS'):
+                return features.get('MAKE_DETAILS') + ' ' + features.get('PART_SHARE_DETAILS')
             return features.get('MAKE_DETAILS')
         elif features.get('MODEL_DETAILS'):
+            if features.get('PART_SHARE_DETAILS'):
+                return features.get('MODEL_DETAILS') + ' ' + features.get('PART_SHARE_DETAILS')
             return features.get('MODEL_DETAILS')
         else:
             return None
@@ -63,6 +77,9 @@ class BaseScraper:
 
     def extract_currency(self, soup, features, list_page_data):
         return features.get('CURRENCY_DETAILS')
+
+    def extract_part_share(self, soup, features, list_page_data):
+        return features.get('PART_SHARE_DETAILS')
 
     def extract_vat_status(self, soup, features, list_page_data):
         return features.get('VAT_STATUS_DETAILS')
@@ -236,6 +253,7 @@ class BaseScraper:
             'year': self.extract_attribute('year', self.extract_year, soup, features, list_page_data, int),
             'price': self.extract_attribute('price', self.extract_price, soup, features, list_page_data, int),
             'currency': self.extract_attribute('currency', self.extract_currency, soup, features, list_page_data, str),
+            'part_share': self.extract_attribute('part_share', self.extract_part_share, soup, features, list_page_data, str),
             'vat_status': self.extract_attribute('vat_status', self.extract_vat_status, soup, features, list_page_data, bool),
             'location': self.extract_attribute('location', self.extract_location, soup, features, list_page_data, str),
             'country': self.extract_attribute('country', self.extract_country, soup, features, list_page_data, str),
@@ -275,13 +293,13 @@ class BaseScraper:
         }
     
 
-    def _page_changed(self, page: Page):
-        current_hash = md5(page.html.encode()).hexdigest()
+    def _page_changed(self, page: Page, section_html: str):
+        current_hash = md5(md.markdownify(section_html).encode()).hexdigest()
         if not page.hash or not page.extracted_data:
             return True
         
         if current_hash == page.hash:
-            print(f"Page {page.url} has not changed")
+            logger.debug(f"Page {page.url} has not changed")
             return False
         
         return True
@@ -305,19 +323,22 @@ class BaseScraper:
         """Main method to scrape a URL and extract listing data."""
         if not page.html:
             return
-        
-        page_changed = self._page_changed(page)
+
+        soup = BeautifulSoup(page.html, 'lxml')
+
+        section_soup = self.get_section_soup(soup)
+
+        page_changed = self._page_changed(page, section_soup)
         
         if page_changed or full_scrape:
-            print(f"Extracting data for {page.url}")
-            soup = BeautifulSoup(page.html, 'lxml')
-            features = self.get_features(page.html)
+            logger.info(f"Extracting data for {page.url}")
+            features = self.get_features(section_soup)
             if page.list_page_data:
                 page.list_page_data = self._clean_text_data(page.list_page_data)
 
             extracted_data = self._extract_all_attributes(soup, features, page.list_page_data, page.url)
             extracted_data = self.pull_forward_data(page, extracted_data)
-            set_page_hash(page.url, md5(page.html.encode()).hexdigest())
+            set_page_hash(page.url, md5(md.markdownify(section_soup).encode()).hexdigest())
         
         else:
             extracted_data = page.extracted_data.model_dump()
@@ -328,13 +349,20 @@ class BaseScraper:
         inference_manager = InferenceRunner()
         inference_result = inference_manager.run(page.url, extracted_data)
         extracted_data.inference_result = InferenceResult(**inference_result)
-
-        validation_result = MODEL_VALIDATION_MANAGER.validate(
-            page.url,
-            extracted_data.inference_result.style_vector_v2,
-            extracted_data.make,
-            extracted_data.model
-        )
+        
+        if extracted_data.inference_result.style_vector_v2:
+            validation_result = MODEL_VALIDATION_MANAGER.validate(
+                page.url,
+                extracted_data.inference_result.style_vector_v2,
+                extracted_data.make,
+                extracted_data.model
+            )
+        else:
+            validation_result = {
+                'valid': False,
+                'make': None,
+                'model': None
+            }
         extracted_data = extracted_data.model_dump()
         if validation_result.get('valid') == True:
             extracted_data['validated_make'] = validation_result.get('make')
@@ -362,7 +390,7 @@ class BaseScraper:
         
         pages = get_pages_for_website(self.website_name, active=True)
         
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             futures = [executor.submit(self.scrape_page, page, full_scrape) for page in pages]
             for future in futures:
                 future.result()

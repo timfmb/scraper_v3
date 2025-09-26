@@ -2,6 +2,9 @@ from ..client import get_db
 from .models import Page
 from datetime import datetime, timedelta
 import random
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 def get_collection():
     db = get_db()
@@ -120,16 +123,19 @@ def get_detail_pages_wo_html_to_download() -> list[dict]:
             configs[page['website_name']] = get_detail_page_config(page['website_name'])
         page['config'] = configs[page['website_name']]
         built_pages.append(page)
+    random.shuffle(built_pages)
     return built_pages
     
 
 def get_detail_pages_to_redownload() -> list[dict]:
     collection = get_collection()
     # Random cutoff time between 18 and 36 hours
-    random_hours = random.uniform(18, 36)
+    random_hours = random.uniform(36, 48)
     cutoff_time = datetime.now() - timedelta(hours=random_hours)
+
+    logger.info(f'Cutoff time: {cutoff_time}')
     
-    pages = collection.find({'html': None, 'active': True, 'last_scraped': {'$lt': cutoff_time}}, {'url': 1, 'website_name': 1})
+    pages = collection.find({'active': True, 'last_scraped': {'$lt': cutoff_time}}, {'url': 1, 'website_name': 1})
     configs = {}
     built_pages = []
     for page in pages:
@@ -147,7 +153,7 @@ def set_page_html(url: str, html: str) -> None:
         {'url': url},
         {'$set': {
             'html': html,
-            'last_scraped': datetime.now().isoformat()
+            'last_scraped': datetime.now()
         }}
     )
 
@@ -202,19 +208,58 @@ def delete_all_html_for_website(website_name: str) -> None:
 
 
 def get_inferred_description(url: str) -> dict:
-    collection = get_collection()
-    page = collection.find_one({'url': url}, {'extracted_data.inferred_description': 1})
-    if page and page.get('extracted_data') and page['extracted_data'].get('inferred_description'):
-        return page['extracted_data']['inferred_description']
-    return None
+    """
+    Get cached inferred description for a URL.
+    
+    Returns:
+        dict: Cached description data or None if not found
+    """
+    try:
+        collection = get_collection()
+        page = collection.find_one({'url': url}, {'extracted_data.inferred_description': 1})
+        if page and page.get('extracted_data') and page['extracted_data'].get('inferred_description'):
+            return page['extracted_data']['inferred_description']
+        return None
+    except Exception as e:
+        logger.info(f"Error retrieving inferred description for URL {url}: {e}")
+        return None
 
 
 def set_inferred_description(url: str, description: str, original_description_hash: str) -> None:
-    collection = get_collection()
-    collection.update_one(
-        {'url': url},
-        {'$set': {
-            'extracted_data.inferred_description': {'description': description, 'original_description_hash': original_description_hash}
-        }}
-    )
+    """
+    Cache inferred description for a URL with improved error handling and upsert logic.
+    
+    Args:
+        url: The page URL
+        description: The cleaned description
+        original_description_hash: Hash of the original description
+    """
+    try:
+        collection = get_collection()
+        
+        # Use upsert to handle cases where the page doesn't exist yet
+        result = collection.update_one(
+            {'url': url},
+            {
+                '$set': {
+                    'extracted_data.inferred_description': {
+                        'description': description, 
+                        'original_description_hash': original_description_hash
+                    }
+                }
+            },
+            upsert=True  # Create document if it doesn't exist
+        )
+        
+        # Log the result for debugging
+        if result.upserted_id:
+            logger.info(f"Created new page document for URL: {url}")
+        elif result.modified_count > 0:
+            logger.info(f"Updated inferred description cache for URL: {url}")
+        else:
+            logger.info(f"No changes made to cache for URL: {url}")
+            
+    except Exception as e:
+        logger.info(f"Error setting inferred description for URL {url}: {e}")
+        raise
 

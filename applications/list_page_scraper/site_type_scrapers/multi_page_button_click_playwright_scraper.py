@@ -1,4 +1,7 @@
 from applications.list_page_scraper.base_scrapers.base_playwright_scraper import BasePlaywrightScraper
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 from playwright.async_api import async_playwright
 from typing import Callable
 from bs4 import BeautifulSoup
@@ -74,21 +77,21 @@ class MultiPageButtonClickPlaywrightScraper(BasePlaywrightScraper):
                                     await page.locator(self.website.list_page_config.button_selector).first.click()
                                     await asyncio.sleep(5)
                                 except Exception as e:
-                                    print(e)
+                                    logger.error(e)
                                 try:
                                     await page.wait_for_load_state('networkidle', timeout=self.timeout)
                                 except Exception as e:
                                     pass
 
                         except Exception as e:
-                            print(e)
+                            logger.error(e)
                             break
                     except Exception as e:
-                        print(e)
+                        logger.error(e)
                         break
 
             except Exception as e:
-                print(e)
+                logger.error(e)
                 pass
             finally:
                 await self.safe_close(browser, context, page)
@@ -97,7 +100,7 @@ class MultiPageButtonClickPlaywrightScraper(BasePlaywrightScraper):
 
 
     def run(self):
-        print(f'Running URL Scraper: {self.website.name}')
+        logger.error(f'Running URL Scraper: {self.website.name}')
 
         agg_urls = set()
         for url_string in self.website.list_page_config.url_strings:
@@ -105,9 +108,9 @@ class MultiPageButtonClickPlaywrightScraper(BasePlaywrightScraper):
                 urls = asyncio.run(self.run_url_string(url_string))
                 agg_urls.update(urls)
             except Exception as e:
-                print(e)
+                logger.error(e)
                 continue
         
         remove_pages(self.website.name, list(agg_urls))
-        print(f'{self.website.name}: Scraped {len(agg_urls)} urls')
+        logger.error(f'{self.website.name}: Scraped {len(agg_urls)} urls')
         return self.website.name, len(agg_urls)

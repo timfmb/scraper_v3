@@ -12,13 +12,18 @@ OUTPUT FORMAT:
 CONTENT RULES:
 MUST EXCLUDE:
 - Broker information
-- Contact details
+- Contact details (including phone numbers, email addresses, names with contact context)
+- Any text instructing to "call", "contact", "phone", or "email" someone
+- Phone numbers in any format (e.g., "0272 744 886", "+44 1234 567890", "021 02675637")
+- Email addresses
+- Personal names when mentioned in contact context (e.g., "Call John Smith", "Contact Mary")
 - Website references
 - Prices
 - Technical specifications (length, beam, draft)
 - Image descriptions or gallery information
 - Legal disclaimers
 - Copyright notices
+
 
 PRESERVATION PRIORITY:
 - PRESERVE the original wording, phrasing, and terminology wherever possible

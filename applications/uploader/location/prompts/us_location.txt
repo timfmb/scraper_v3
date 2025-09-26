@@ -77,5 +77,3 @@ Output: {"country": "United States", "location": "Southeast - Florida Gulf Coast
 Input: location="los angeles", country="US"
 Output: {"country": "United States", "location": "California - Southern", "country_matched": true}
 
-Input: location="toronto", country="Canada"
-Output: {"country": "United States", "location": "", "country_matched": false}

@@ -7,6 +7,9 @@ from interfaces.webshare_client import WebshareClient
 from bs4 import BeautifulSoup
 from interfaces.scrappey_client import ScrappeyClient
 import playwright
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class BasePlaywrightScraper:
@@ -114,12 +117,13 @@ class BasePlaywrightScraper:
         """Execute a string function with soup as parameter"""
         try:
             if not function_string:
-                print(f'No function string provided: {function_string}')
+                logger.warning(f'No function string provided: {function_string}')
                 return None 
             # Create a safe execution environment with necessary imports
             # Don't include soup initially - we'll pass it as a parameter
             exec_globals = {
                 'BeautifulSoup': BeautifulSoup,
+                'asyncio': asyncio,
                 '__builtins__': __builtins__
             }
             
@@ -143,17 +147,18 @@ class BasePlaywrightScraper:
             else:
                     raise ValueError("No callable function found in the function string")
         except Exception as e:
-            print(f'Error executing string function: {e}')
+            logger.error(f'Error executing string function: {e}')
             return None
         
 
     async def _execute_string_function_pw_page(self, function_string: str, page):
         try:
             if not function_string:
-                print(f'No function string provided: {function_string}')
+                logger.warning(f'No function string provided: {function_string}')
                 return None
             exec_globals = {
                 'playwright': playwright,
+                'asyncio': asyncio,
                 '__builtins__': __builtins__
             }
 
@@ -174,7 +179,7 @@ class BasePlaywrightScraper:
             else:
                 raise ValueError("No callable function found in the function string")
         except Exception as e:
-            print(f'Error executing pw page string function: {e}')
+            logger.error(f'Error executing pw page string function: {e}')
             return None
         
 

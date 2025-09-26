@@ -10,6 +10,7 @@ class BrokerDetails(BaseModel):
 class Output(BaseModel):
     PRICE_DETAILS: int | None
     CURRENCY_DETAILS: str | None
+    PART_SHARE_DETAILS: str | None
     VAT_STATUS_DETAILS: bool | None
     LENGTH_DETAILS: float | None
     LENGTH_WATERLINE_DETAILS: float | None

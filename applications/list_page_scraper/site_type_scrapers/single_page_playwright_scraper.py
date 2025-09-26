@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 import asyncio
 import traceback
 from interfaces.scraper_db.pages.service import create_page, set_list_page_data, remove_pages
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class SinglePagePlaywrightScraper(BasePlaywrightScraper):
@@ -59,7 +62,7 @@ class SinglePagePlaywrightScraper(BasePlaywrightScraper):
 
     
     def run(self):
-        print(f'Running URL Scraper: {self.website.name}')
+        logger.info(f'Running URL Scraper: {self.website.name}')
 
         agg_urls = set()
         for url_string in self.website.list_page_config.url_strings:
@@ -73,5 +76,5 @@ class SinglePagePlaywrightScraper(BasePlaywrightScraper):
             self.website.name, 
             urls_to_keep=list(agg_urls)
         )
-        print(f'{self.website.name}: Scraped {len(agg_urls)} urls')
+        logger.info(f'{self.website.name}: Scraped {len(agg_urls)} urls')
         return self.website.name, len(agg_urls)

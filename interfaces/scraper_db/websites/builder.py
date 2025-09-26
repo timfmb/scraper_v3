@@ -1,6 +1,9 @@
 from ..client import get_db
 from .models import Website, ListPageConfig, DetailPageConfig
 from .service import get_website_by_name
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 
@@ -22,7 +25,7 @@ class ScraperBuilder:
     ):
         website = get_website_by_name(name)
         if website:
-            print(f'Website {name} already exists')
+            logger.warning(f'Website {name} already exists')
             raise ValueError(f'Website {name} already exists')
         website = Website(url=url, name=name, tags=tags)
         self.website = website

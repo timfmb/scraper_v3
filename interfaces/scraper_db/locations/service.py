@@ -22,3 +22,8 @@ def get_inferred_location(country: str, location: dict):
 def get_all_locations():
     collection = get_collection()
     return collection.find({}, {})
+
+
+def remove_location(country: str, location: dict):
+    collection = get_collection()
+    collection.delete_one({'country': country, 'location': location})

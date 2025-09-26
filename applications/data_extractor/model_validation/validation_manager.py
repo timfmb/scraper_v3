@@ -2,6 +2,9 @@ from .fuzzy_index import FuzzyIndex
 from .image_check import image_check
 from interfaces.production_db.client import get_db as get_atlas_search_engine_db
 from interfaces.scraper_db.client import get_db
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class MongoValidationCache:
@@ -80,7 +83,7 @@ class ValidationManager:
                     'valid': False
                 }
         except Exception as e:
-            print(e)
+            logger.error(e)
             return {
                 'valid': False
             }

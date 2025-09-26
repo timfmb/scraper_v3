@@ -1,5 +1,8 @@
 import requests
 from urllib.parse import urlparse
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 def get_proxy_object(proxy_url):
     parsed_url = urlparse(proxy_url)
@@ -38,7 +41,7 @@ def get_cookies_and_user_agent(api_key, target_url, proxy_url, version=126, brow
     if browser_name == 'firefox':
         body.pop('noDriver')
         
-    print('----- Requesting cookies and user agent from Scrappey, may take 30 seconds -----')
+    logger.info('----- Requesting cookies and user agent from Scrappey, may take 30 seconds -----')
 
     response = requests.post(url, json=body, headers=headers)
     
@@ -52,9 +55,9 @@ def get_cookies_and_user_agent(api_key, target_url, proxy_url, version=126, brow
     cookie_object = parse_cookie_string(cookie_string, target_url=target_url)
     proxy_object = get_proxy_object(proxy_url)
     
-    print('----- Cookies and user agent received from Scrappey -----')
-    # print(f'User Agent: {user_agent}')
-    # print(f'Cookies: {cookie_object}')
+    logger.info('----- Cookies and user agent received from Scrappey -----')
+    # logger.info(f'User Agent: {user_agent}')
+    # logger.info(f'Cookies: {cookie_object}')
     
     return cookie_object, user_agent, proxy_object
 
@@ -64,7 +67,7 @@ def parse_cookie_string(cookie_string, target_url):
     domain = parsed_url.netloc
 
     cookies = []
-    print(cookie_string)
+    logger.info(cookie_string)
     for cookie in cookie_string.split('; '):
         try:
             name, value = cookie.split('=', 1)
@@ -89,7 +92,7 @@ class ScrappeyClient:
     def get_config(self, target_url, proxy, version=126, browser_name='chrome'):
         proxy_url = f"http://{proxy['username']}:{proxy['password']}@{proxy['server'].replace('http://', '')}"
         cookie_object, user_agent, proxy_obj = get_cookies_and_user_agent(self.api_key, target_url, proxy_url, version=version, browser_name=browser_name)
-        print(cookie_object)
-        print(user_agent)
-        print(proxy_obj)
+        logger.info(cookie_object)
+        logger.info(user_agent)
+        logger.info(proxy_obj)
         return cookie_object, user_agent, proxy_obj

@@ -6,6 +6,9 @@ from applications.detail_page_scraper.priority_queue import PriorityQueue
 from interfaces.webshare_client import WebshareClient
 from interfaces.scraper_db.pages.service import set_page_html, remove_page
 import traceback
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 class ScraperWorker:
     def __init__(self, url_queue: PriorityQueue):
@@ -16,7 +19,7 @@ class ScraperWorker:
         
     async def scrape_page(self, page, url_dict: dict):
         try:
-            print(f'Scraping {url_dict["url"]}')
+            logger.info(f'Scraping {url_dict["url"]}')
             page_config = url_dict['config']
             if page_config.get('wait_until'):
                 wait_until = page_config['wait_until']
@@ -30,9 +33,10 @@ class ScraperWorker:
             )
 
             if page_config.get('wait_for_selector'):
-                await page.locator(page_config['wait_for_selector']).first.wait_for(state='attached', timeout=45000)
+                await page.locator(page_config['wait_for_selector']).first.wait_for(state='attached', timeout=90000)
+                await asyncio.sleep(2)
 
-            print(f'{url_dict["url"]} - {response.status}')
+            logger.info(f'{url_dict["url"]} - {response.status}')
             
             if response.status == 404:
                 remove_page(url_dict['url'])
@@ -51,7 +55,7 @@ class ScraperWorker:
             self.url_queue.remove_from_processing(url_dict)
             return True
         except Exception as e:
-            print("Error in ScraperWorker page scrape: ", e)
+            logger.error("Error in ScraperWorker page scrape: ", e)
             traceback.print_exc()
             current_priority = url_dict['priority']
             url_dict.pop('priority')
@@ -81,7 +85,7 @@ class ScraperWorker:
                         )
 
                         tasks = []
-                        for _ in range(randint(4, 8)):
+                        for _ in range(randint(4, 6)):
                             if self.url_queue.empty():
                                 break
 
@@ -101,6 +105,6 @@ class ScraperWorker:
 
                     await browser.close()
                 except Exception as e:
-                    print("Error in ScraperWorker: ", e)
+                    logger.error("Error in ScraperWorker: ", e)
                     await asyncio.sleep(1)
 

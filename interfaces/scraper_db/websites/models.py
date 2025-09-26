@@ -34,7 +34,7 @@ class DetailPageConfig(BaseModel):
     scraper_string: str | None = None
     wait_until: str | None = None
     wait_for_selector: str | None = None
-    defaults: Defaults = None
+    defaults: Defaults | None = None
 
 
 class Website(BaseModel):

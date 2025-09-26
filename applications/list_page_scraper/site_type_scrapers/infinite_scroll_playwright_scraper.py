@@ -1,4 +1,7 @@
 from applications.list_page_scraper.base_scrapers.base_playwright_scraper import BasePlaywrightScraper
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 from playwright.async_api import async_playwright
 from typing import Callable
 from bs4 import BeautifulSoup
@@ -121,7 +124,7 @@ class InfiniteScrollPlaywrightScraper(BasePlaywrightScraper):
 
 
     def run(self):
-        print(f'Running URL Scraper: {self.website.name}')
+        logger.info(f'Running URL Scraper: {self.website.name}')
         agg_urls = set()
         for url_string in self.website.list_page_config.url_strings:
             try:
@@ -131,5 +134,5 @@ class InfiniteScrollPlaywrightScraper(BasePlaywrightScraper):
                 continue
         
         remove_pages(self.website.name, list(agg_urls))
-        print(f'{self.website.name}: Scraped {len(agg_urls)} urls')
+        logger.info(f'{self.website.name}: Scraped {len(agg_urls)} urls')
         return self.website.name, len(agg_urls)

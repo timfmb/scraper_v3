@@ -41,7 +41,7 @@ def get_websites():
         website = website.model_dump()
         
         # Current data
-        current_pages = pages_service.count_pages_for_website(website['name'])
+        current_pages = pages_service.count_pages_for_website(website['name'], active=True)
         errors = pages_service.get_active_page_errors_for_website(website['name'])
         current_error_counts = {}
         for page_errors in errors:

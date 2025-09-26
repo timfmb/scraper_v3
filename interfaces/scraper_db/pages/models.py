@@ -27,6 +27,7 @@ class ExtractedData(BaseModel):
     year: int | None
     price: int | None
     currency: str | None
+    part_share: str | None = None
     vat_status: bool | None
     location: str | None
     country: str | None

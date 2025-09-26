@@ -9,6 +9,37 @@ from datetime import datetime
 from typing import Literal
 import time
 import questionary
+from concurrent.futures import ThreadPoolExecutor
+from interfaces.scraper_db.websites.models import Website
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
+
+
+def run_scraper(website: Website, manager: MonitoringManager):
+    manager.add_list_page_real_time(website.name, datetime.now())
+    if not website.list_page_config:
+        logger.warning(f'No list page config found for {website.name}')
+        return
+
+    if website.list_page_scraper_type == 'multi_page_playwright':
+        scraper = MultiPagePlaywrightScraper(website_name=website.name)
+        scraper.run()
+    elif website.list_page_scraper_type == 'single_page_playwright':
+        scraper = SinglePagePlaywrightScraper(website_name=website.name)
+        scraper.run()
+    elif website.list_page_scraper_type == 'infinite_scroll_playwright':
+        scraper = InfiniteScrollPlaywrightScraper(website_name=website.name)
+        scraper.run()
+    elif website.list_page_scraper_type == 'button_scroll_playwright':
+        scraper = ButtonScrollPlaywrightScraper(website_name=website.name)
+        scraper.run()
+    elif website.list_page_scraper_type == 'multi_page_button_click_playwright':
+        scraper = MultiPageButtonClickPlaywrightScraper(website_name=website.name)
+        scraper.run()
+    else:
+        logger.error(f'No scraper type found for {website.name}')
 
 
 
@@ -29,37 +60,27 @@ def run(
         if website:
             websites = [website]
         else:
-            print(f'Website {name} not found')
+            logger.error(f'Website {name} not found')
             return
+
+    num_threads = int(questionary.text('Number of threads?').ask())
+
+    if questionary.confirm('Run only invalid websites?').ask():
+        websites_to_run = []
+        for website in websites:
+            if not website.last_scrape_valid:
+                websites_to_run.append(website)
+        websites = websites_to_run
+
 
     while True:
         manager.set_list_page_sleeping(False)
-        for website in websites:
-            manager.add_list_page_real_time(website.name, datetime.now())
-            if not website.list_page_config:
-                print(f'No list page config found for {website.name}')
-                continue
-
-            if website.list_page_scraper_type == 'multi_page_playwright':
-                scraper = MultiPagePlaywrightScraper(website_name=website.name)
-                scraper.run()
-            elif website.list_page_scraper_type == 'single_page_playwright':
-                scraper = SinglePagePlaywrightScraper(website_name=website.name)
-                scraper.run()
-            elif website.list_page_scraper_type == 'infinite_scroll_playwright':
-                scraper = InfiniteScrollPlaywrightScraper(website_name=website.name)
-                scraper.run()
-            elif website.list_page_scraper_type == 'button_scroll_playwright':
-                scraper = ButtonScrollPlaywrightScraper(website_name=website.name)
-                scraper.run()
-            elif website.list_page_scraper_type == 'multi_page_button_click_playwright':
-                scraper = MultiPageButtonClickPlaywrightScraper(website_name=website.name)
-                scraper.run()
-            else:
-                print(f'No scraper type found for {website.name}')
+        with ThreadPoolExecutor(max_workers=int(num_threads)) as executor:
+            executor.map(run_scraper, websites, [manager] * len(websites))
+            
         if not continuous:
             break
         manager.set_list_page_sleeping(True)
-        print('Sleeping for 12 hours')
+        logger.info('Sleeping for 12 hours')
         time.sleep(86400/2)
 

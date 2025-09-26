@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 import random
 from interfaces.scraper_db.pages.service import count_pages_for_website
 from typing import Literal
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_collection():
@@ -58,13 +61,13 @@ def get_detail_page_config(website_name: str) -> dict:
 
 
 def update_list_page_scraping_function(website_name: str, function: str):
-    print(f"Updating list page scraping function for {website_name} to {function}")
+    logger.info(f"Updating list page scraping function for {website_name} to {function}")
     collection = get_collection()
     collection.update_one({'name': website_name}, {'$set': {'list_page_config.scraping_function': function}})
 
 
 def update_list_page_extra_data_function(website_name: str, function: str):
-    print(f"Updating list page extra data function for {website_name} to {function}")
+    logger.info(f"Updating list page extra data function for {website_name} to {function}")
     collection = get_collection()
     if function.strip() == '':
         function = None
@@ -72,7 +75,7 @@ def update_list_page_extra_data_function(website_name: str, function: str):
 
 
 def update_list_page_pre_scrape_function(website_name: str, function: str):
-    print(f"Updating list page pre scrape function for {website_name} to {function}")
+    logger.info(f"Updating list page pre scrape function for {website_name} to {function}")
     collection = get_collection()
     if function.strip() == '':
         function = None
@@ -98,7 +101,7 @@ def update_list_page_config_settings(
     max_retries: int|None = None,
     max_pages: int|None = None
 ):
-    print(f"Updating list page config settings for {website_name}")
+    logger.info(f"Updating list page config settings for {website_name}")
     collection = get_collection()
     collection.update_one({'name': website_name}, {'$set': 
         {
@@ -122,7 +125,7 @@ def update_detail_page_config_settings(
     wait_until: Literal['load', 'domcontentloaded', 'networkidle'],
     wait_for_selector: str|None = None
 ):
-    print(f"Updating detail page config settings for {website_name}")
+    logger.info(f"Updating detail page config settings for {website_name}")
     collection = get_collection()
     collection.update_one({'name': website_name}, {'$set': 
         {
@@ -154,5 +157,24 @@ def update_defaults(website_name: str, location: str|None = None, country: str|N
             'detail_page_config.defaults.country': country,
             'detail_page_config.defaults.currency': currency
         }})
+
+
+def mark_as_invalid(
+    website_name: str
+):
+    collection = get_collection()
+    collection.update_one({'name': website_name}, {'$set': 
+        {
+            'last_scrape_valid': False
+        }})
     
+
+def mark_as_valid(
+    website_name: str
+):
+    collection = get_collection()
+    collection.update_one({'name': website_name}, {'$set': 
+        {
+            'last_scrape_valid': True
+        }})
     

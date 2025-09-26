@@ -4,6 +4,9 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from interfaces.scraper_db.client import get_db
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 
@@ -44,6 +47,7 @@ class ImageManager:
         try:
             r = requests.post(f'{self.cache_url}/client/get-urls-or-add-to-queue', json={'urls': urls})
             result = r.json()
+            logger.info(result)
             successful = {}
             added_to_queue = []
 
@@ -114,8 +118,4 @@ class ImageManager:
         except:
             traceback.print_exc()
             return None
-                
-
-        
-
         

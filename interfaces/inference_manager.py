@@ -8,6 +8,9 @@ import httpx
 from interfaces.scraper_db.client import get_db
 from config import MAIN_NODE_IP
 from interfaces.scraper_db.pages.models import ExtractedData
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class MongoInferenceCache:
@@ -69,12 +72,18 @@ class InferenceRunner:
 
     def get_resized_urls(self, image_urls):
         try:
-            results = self.image_db['image-data'].find({'original_url': {'$in': image_urls}}, {'resized':1, '_id':0})
-            resized_urls = [i['resized'] for i in results if i['resized'] is not None]
+            results = self.image_db['image-data'].find({'original_url': {'$in': image_urls}}, {'original_url':1, 'resized':1, '_id':0})
+            resized_urls = []
+            used_original_urls = []
+            for i in results:
+                if i['original_url'] not in used_original_urls and i['resized'] is not None:
+                    resized_urls.append(i['resized'])
+                    used_original_urls.append(i['original_url'])
             if len(resized_urls) > 0 and len(resized_urls) == len(image_urls):
                 return resized_urls
             return None
         except Exception as e:
+            logger.info(f'Error: {e}')
             return None
         
 
@@ -127,6 +136,7 @@ class InferenceRunner:
         inf_result = r.json()
 
         if inf_result.get('error'):
+            logger.info(f'Error: {inf_result.get("error")}')
             return None
 
         self.cache.set(listing_url, inf_result)
@@ -139,10 +149,13 @@ class InferenceRunner:
         cached = self.check_cache(listing_url)
         if cached:
             return cached
+
+        logger.info('Not Cached')
       
         images = self.download_images_for_listing(listing)
 
         if not images:  
+            logger.info('No images found')
             return {
                 'boat_type': None,
                 'hull_type': None,
@@ -157,6 +170,7 @@ class InferenceRunner:
         inf_result = self.run_inference_for_listing(listing_url, images)
         if inf_result:
             return inf_result
+        logger.info('No inference result')
         return {
             'boat_type': None,
             'hull_type': None,

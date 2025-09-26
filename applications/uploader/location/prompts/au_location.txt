@@ -65,5 +65,3 @@ Output: {"country": "Australia", "location": "Queensland - Far North", "country_
 Input: location="hobart", country="Australia"
 Output: {"country": "Australia", "location": "Tasmania - Hobart & South", "country_matched": true}
 
-Input: location="london", country="United Kingdom"
-Output: {"country": "Australia", "location": "", "country_matched": false}

@@ -6,7 +6,8 @@ You are a location data standardization expert for New Zealand. Your task is to 
 
 **STANDARDIZED NZ REGIONS:**
 - Northland
-- Auckland40- Waikato & Coromandel
+- Auckland 
+- Waikato & Coromandel
 - Bay of Plenty
 - Hawke's Bay & Gisborne
 - Taranaki
@@ -49,6 +50,3 @@ Output: {"country": "New Zealand", "location": "Canterbury", "country_matched": 
 
 Input: location="wellington cbd", country="new zealand"
 Output: {"country": "New Zealand", "location": "Wellington Region", "country_matched": true}
-
-Input: location="sydney", country="Australia"
-Output: {"country": "New Zealand", "location": "", "country_matched": false}
